@@ -44,12 +44,12 @@ def create_server(zk_hosts="", zk_timeout=8, namespace="",
                   server_class=ThriftProcessPoolServer, **kwargs):
     """
     create server
-    @param zk_hosts: zookeeper hosts 
+    @param zk_hosts: zookeeper hosts,'127.0.0.1:2181'
     @param zk_timeout: zookeeper connection timeout   
     @param namespace: zookeeper chroot  
     @param global_service: global service name
     @param handlers: handlers implemented respective interface
-    @param port: server port default is 9090
+    @param port: server port default is 8603
     @param version: server version default is 1.0.0
     @param weight: server weight default is 1
     @param server_class: child class of ServerFactory, default is ThriftProcessPoolServer
