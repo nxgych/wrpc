@@ -85,7 +85,7 @@ class ServerConfig(object):
         server config
         @param global_service: global service name
         @param handlers: handlers implemented ifaces
-        @param port: server port default is 9090
+        @param port: server port default is 8603
         @param version: server version default is 1.0.0
         @param weight: server weight default is 1
         @param ip: ip address if you force config it instead of getting local ip 
