@@ -1,0 +1,132 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.chen.wrpc</groupId>
+  <artifactId>wrpc</artifactId>
+  <version>1.0.0</version>
+
+    <name>wrpc</name>
+    <description>A java project of thrift rpc</description>
+
+	<developers>
+		<developer>
+			<id>shuai.chen</id>
+			<name>shuai.chen</name>
+			<email>nxgych@163.com</email>
+		</developer>
+	</developers>
+
+    <properties>
+        <java.version>1.7</java.version>
+        <springframework.version>4.3.3.RELEASE</springframework.version>    
+    </properties>  
+
+    <dependencies>
+        <!-- thrift -->
+		<dependency>
+		    <groupId>org.apache.thrift</groupId>
+		    <artifactId>libthrift</artifactId>
+		    <version>0.9.3</version>
+		</dependency>    
+
+		<!-- common lang -->
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-lang3</artifactId>
+		    <version>3.4</version>
+		</dependency>	
+        <!-- common pool -->
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-pool2</artifactId>
+		    <version>2.4.2</version>
+		</dependency>
+				
+        <!-- zookeeper -->
+		<dependency>
+		    <groupId>org.apache.zookeeper</groupId>
+		    <artifactId>zookeeper</artifactId>
+		    <version>3.4.8</version>
+            <exclusions>  
+                <exclusion>  
+				    <groupId>org.slf4j</groupId>
+				    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>                  
+            </exclusions>  			    
+		</dependency>
+		<!-- curator -->
+		<dependency>
+		    <groupId>org.apache.curator</groupId>
+		    <artifactId>curator-recipes</artifactId>
+		    <version>2.11.0</version>
+		</dependency>	
+		
+        <!-- spring -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${springframework.version}</version>
+		</dependency> 	
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>	
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>								
+    </dependencies>
+
+    <build>
+		<plugins>
+		
+			<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>UTF8</encoding>
+				</configuration>
+			</plugin>
+
+            <plugin>  
+               <groupId>org.apache.maven.plugins</groupId>  
+               <artifactId>maven-resources-plugin</artifactId>  
+               <version>2.7</version>
+               <configuration>  
+                    <encoding>UTF-8</encoding>  
+               </configuration>  
+            </plugin> 	
+
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+				    <appendAssemblyId>false</appendAssemblyId> 
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass></mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			               		
+		</plugins>	    
+    </build>  
+          
+</project>

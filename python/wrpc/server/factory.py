@@ -1,0 +1,178 @@
+#coding:utf-8
+
+'''
+Created on 2017年3月14日
+@author: shuai.chen
+'''
+from __future__ import absolute_import
+
+import functools
+import signal
+import threading
+from multiprocessing import cpu_count
+from abc import ABCMeta,abstractmethod
+
+from thrift.protocol import TCompactProtocol
+from thrift.server import TProcessPoolServer
+from thrift.transport import TSocket, TTransport
+
+from thrift import TTornado
+from tornado import ioloop
+
+from wrpc.common.util import unchecked
+
+class ServerFactory(object):
+    """abstract class of server factory"""
+    __metaclass__ = ABCMeta
+    
+    @abstractmethod
+    def start(self):
+        raise NotImplemented()
+    
+    @abstractmethod
+    def stop(self):
+        raise NotImplemented()
+    
+class ThriftProcessPoolServer(ServerFactory):
+
+    def __init__(self, processor, ip, port, **kwargs):
+        """
+        thrift process pool server
+        @param processor: thrift processor object
+        @param ip: ip 
+        @param port: server port
+        @param process_num:  process num
+        """
+        try:
+            self._server = self.__create_server(processor, ip, port)
+            process_num = kwargs.get("process_num", 0)
+            self._server.setNumWorkers(process_num or cpu_count())
+
+            def clean_shutdown(signum, frame):
+                for worker in self._server.workers:
+                    worker.terminate()
+                try:
+                    threading.Thread(target=self.stop).start()
+                except:
+                    pass
+
+            def add_clean_shutdown(func):
+                @functools.wraps(func)
+                def wrapper(*args, **kwargs):
+                    clean_shutdown(*args, **kwargs)
+                    return func(*args, **kwargs)
+                return wrapper
+
+            sigint_handler = signal.getsignal(signal.SIGINT)
+            if callable(sigint_handler):
+                signal.signal(signal.SIGINT, add_clean_shutdown(sigint_handler))
+            else:
+                signal.signal(signal.SIGINT, clean_shutdown)
+        except Exception, e:
+            raise e
+
+    @staticmethod
+    def __create_server(processor, ip, port):
+        transport = TSocket.TServerSocket(ip, port)   
+        tfactory = TTransport.TFramedTransportFactory()
+        pfactory = TCompactProtocol.TCompactProtocolFactory()
+        return TProcessPoolServer.TProcessPoolServer(processor, transport, tfactory, pfactory)     
+    
+    def start(self):
+        if self._server:
+            self._server.serve()
+
+    def set_post_fork_callback(self, callback):
+        self._server.setPostForkCallback(callback)                 
+
+    def stop(self):
+        if self._server:
+            self._server.stop()     
+
+class GeventProcessPoolServer(ServerFactory):
+    """
+    切记，使用 GeventProcessPoolServer 时，客户端初始化务必在最前面加上以下代码
+        from gevent import monkey
+        monkey.patch_all()
+    """
+    
+    def __init__(self, processor, ip, port, **kwargs):
+        """
+        gevent process pool server
+        @param processor: thrift processor object
+        @param ip: ip 
+        @param port: server port
+        @param process_num:  process num
+        @param coroutines_num: gevent coroutines num
+        """        
+        try:
+            self._server = self.__create_server(processor, ip, port)
+            process_num = kwargs.get("process_num", 0)
+            self._server.setNumWorkers(process_num)
+            coroutines_num = kwargs.get("coroutines_num", 100)
+            self._server.setNumCoroutines(coroutines_num)
+
+            def clean_shutdown(signum, frame):
+                for worker in self._server.workers:
+                    worker.terminate()
+                try:
+                    threading.Thread(target=self.stop).start()
+                except:
+                    pass
+
+            sigint_handler = signal.getsignal(signal.SIGINT)
+            if callable(sigint_handler):
+                def add_clean_shutdown(method):
+                    def wrapper(*args, **kwargs):
+                        clean_shutdown(*args, **kwargs)
+                        return method(*args, **kwargs)
+                    return wrapper
+                signal.signal(signal.SIGINT, add_clean_shutdown(sigint_handler))
+            else:
+                signal.signal(signal.SIGINT, clean_shutdown)
+        except Exception, e:
+            raise e
+
+    @staticmethod
+    def __create_server(processor, ip, port):
+        from ._gevent import GProcessPoolServer
+        transport = TSocket.TServerSocket(ip, port)   
+        tfactory = TTransport.TFramedTransportFactory()
+        pfactory = TCompactProtocol.TCompactProtocolFactory()
+        return GProcessPoolServer(processor, transport, tfactory, pfactory)
+    
+    def start(self):
+        if self._server:
+            self._server.serve()
+
+    def set_post_fork_callback(self, callback):
+        self._server.setPostForkCallback(callback)
+
+    def stop(self):
+        if self._server:
+            self._server.stop()   
+
+@unchecked                    
+class TornadoProcessPoolServer(ServerFactory):
+    """warning: tornado server暂时不能使用"""
+    
+    def __init__(self, processor, ip, port, **kwargs):
+        self._server = self.__create_server(processor, ip, port)
+        self._process_num = kwargs.get("process_num", 0)
+  
+    @staticmethod
+    def __create_server(processor, ip, port):
+        pfactory = TCompactProtocol.TCompactProtocolFactory()
+        server = TTornado.TTornadoServer(processor, pfactory)
+        server.bind(port)
+        return server
+        
+    def start(self):   
+        if self._server:
+            self._server.start(self._process_num)
+            ioloop.IOLoop.instance().start()
+        
+    def stop(self):
+        if self._server:
+            self._server.stop()
+                        
