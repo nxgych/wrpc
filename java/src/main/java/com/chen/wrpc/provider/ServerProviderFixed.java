@@ -67,7 +67,7 @@ public class ServerProviderFixed implements ServerProvider,InitializingBean{
 		return serviceInterfaces;
 	}
 	
-	public void setServiceInterface(String[] serviceInterfaces) {
+	public void setServiceInterfaces(String[] serviceInterfaces) {
 		this.serviceInterfaces = serviceInterfaces;
 	}
 	
