@@ -53,9 +53,9 @@ public class ClientPool implements Closeable{
 	}
 
 	/**
-	 * 设置连接池配置，简化配置 : 只支持最大活跃数数和空闲时间配置
-	 * @param maxActive
-	 * @param idleTime
+	 * 设置连接池配置，简化配置 : 只支持最大活跃数和空闲时间配置
+	 * @param maxActive 最大活跃数
+	 * @param idleTime 空闲时间
 	 */
 	public void setPoolConfig(Integer maxActive, Integer idleTime){
 		GenericKeyedObjectPoolConfig poolConfig = new GenericKeyedObjectPoolConfig();

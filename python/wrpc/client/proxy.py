@@ -6,13 +6,17 @@ Created on 2017年3月4日
 '''
 from __future__ import absolute_import
 
+import time
 import functools
 import logging
 import types
 
-from .factory import ThriftClientFactory
+from thrift.transport.TTransport import TTransportException
+
 from wrpc.common.pool import KeyedObjectPool
 from wrpc.common.util import singleton
+
+from .factory import ThriftClientFactory
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +24,21 @@ logger = logging.getLogger(__name__)
 class ClientProxy(object):
     """client proxy class"""
     
-    def __init__(self, provider, client_class=ThriftClientFactory, **kwargs):
+    def __init__(self, provider, client_class=ThriftClientFactory, 
+                 retry=3, retry_interval=0.2, **kwargs):
         """
         client proxy
         @param provider: server provider,instance of AutoProvider or FixedProvider class
         @param client_class: child class of ClientFactory, default is ThriftClientFactory
+        @param retry: retry access times, default is 3
+        @param retry_interval: retry interval time, default 0.2s
         @param kwargs: 
             pool_max_size: client pool max size, default is 8    
             pool_wait_timeout: client pool block time, default is None means forever      
         """
         self.__provider = provider
+        self.__retry = retry
+        self.__retry_interval = retry_interval
         self.__kwargs = kwargs
         
         self.__set_client_factory(client_class)
@@ -72,15 +81,22 @@ class ClientProxy(object):
         @param args: args of service function  
         """
         key = skey.__name__.split(".")[-1] if type(skey) == types.ModuleType else skey
-        obj = self.__pool.borrow_obj(key)
-        try:
-            if not obj._iprot.trans.isOpen():
-                obj._iprot.trans.open()
-
-            func = getattr(obj, fun.__name__) if callable(fun) else getattr(obj, fun)
-            return func(*args)
-        except Exception, e:
-            raise e
-        finally:
-            self.__pool.return_obj(obj, key)
+        exception = None
+        for _ in xrange(self.__retry):
+            obj = None
+            try:
+                obj = self.__pool.borrow_obj(key)
+                func = getattr(obj, fun.__name__) if callable(fun) else getattr(obj, fun)
+                return func(*args)
+            except TTransportException, e:
+                exception = e
+                logger.error("Could not connect server!")
+                time.sleep(self.__retry_interval)
+            except Exception, e:
+                exception = e
+            finally:
+                if obj:
+                    self.__pool.return_obj(obj, key)
+                
+        raise exception      
         

@@ -57,6 +57,7 @@ def create_server(zk_hosts="", zk_timeout=8, namespace="",
     @param kwargs:
         process_num: server process num default is cpu num
         coroutines_num: gevent coroutines num default is 100
+        threads_num: TNonblockingServer threads num
     """
     #server class
     server_clazz = server_class
@@ -82,7 +83,7 @@ def init_client(zk_hosts="", zk_timeout=8, namespace="",
                 provider_class=AutoProvider, server_address="", 
                 global_service="com.wrpc.service", version=constant.VERSION_DEFAULT, 
                 service_ifaces=[], load_balance=RoundRobinLoad, 
-                client_class=ThriftClientFactory, **kwargs):
+                client_class=ThriftClientFactory, retry=3, retry_interval=0.2, **kwargs):
     """
     initialize client
     @param zk_hosts: zookeeper hosts if provider is AutoProvider else ignore that
@@ -97,7 +98,9 @@ def init_client(zk_hosts="", zk_timeout=8, namespace="",
     @param service_ifaces: service interfaces class
     @param load_balance: load balance class, RoundRobinLoad or RandomLoad, 
                          default is RoundRobinLoad   
-    @param client_class: child class of ClientFactory, default is ThriftClientFactory                     
+    @param client_class: child class of ClientFactory, default is ThriftClientFactory    
+    @param retry: retry access times, default is 3     
+    @param retry_interval: retry interval time, default 0.2s            
     @param kwargs: 
         pool_max_size: client pool max size, default is 8    
         pool_wait_timeout: client pool block time, default is None means forever          
@@ -142,5 +145,5 @@ def init_client(zk_hosts="", zk_timeout=8, namespace="",
             
     global Client                     
     provider = provider_clazz(server_from, global_service, version, ifaces, load_balance_class)
-    Client = ClientProxy(provider, client_clazz, **kwargs)    
+    Client = ClientProxy(provider, client_clazz, retry, retry_interval, **kwargs)    
     

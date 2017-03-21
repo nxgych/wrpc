@@ -2,7 +2,8 @@ package com.chen.wrpc.client;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.InvocationHandler;  
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;  
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -10,13 +11,14 @@ import java.util.Map;
 
 import org.apache.thrift.TServiceClient;  
 import org.apache.thrift.TServiceClientFactory;
+import org.apache.thrift.transport.TTransportException;
 import org.springframework.beans.factory.FactoryBean;  
 import org.springframework.beans.factory.InitializingBean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chen.wrpc.client.ClientPoolFactory.PoolOperationCallBack;
+import com.chen.wrpc.common.WrpcException;
 import com.chen.wrpc.provider.ServerProvider;
   
 /**
@@ -33,8 +35,14 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	// 最大活跃连接数
 	private Integer maxActive = 8;
 
-	//ms,default 3 min,连接空闲时间,-1,关闭空闲检测
+	//连接空闲时间 ms, default 3 min, -1:关闭空闲检测
 	private Integer idleTime = 180000;
+	
+	//retry times
+	private Integer retry = 3;
+	
+	//retry interval, default 200 ms
+	private Integer retryInterval = 200;
 	
 	//server provicer
 	private ServerProvider serverProvider;
@@ -45,18 +53,6 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	private ClientPool clientPool;
 
 	private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-	
-	private PoolOperationCallBack callback = new PoolOperationCallBack() {
-		@Override
-		public void make(TServiceClient client) {
-			logger.info("Client created.");
-		}
-
-		@Override
-		public void destroy(TServiceClient client) {
-			logger.info("Client destroy.");
-		}
-	};
 	
 	private ClientProxy(){}
 
@@ -84,6 +80,14 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	public void setIdleTime(Integer idleTime) {
 		this.idleTime = idleTime;
 	}
+	
+	public void setRetry(Integer retry){
+		this.retry = retry;
+	}
+	
+	public void setRetryInterval(Integer retryInterval){
+		this.retryInterval = retryInterval;
+	}
 
 	public void setServerProvider(ServerProvider serverProvider) {
 		this.serverProvider = serverProvider;
@@ -100,17 +104,13 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	 * @throws Exception
 	 */
 	public void loadClientProxy() throws Exception{
-		// 加载Iface接口
         String[] interfaceNames = serverProvider.getServiceInterfaces();		        
-        Class<?>[] objectClassArray = new Class[interfaceNames.length];
         Map<String,TServiceClientFactory<TServiceClient>> cfMap = new HashMap<String,TServiceClientFactory<TServiceClient>>();		
 		
+        // 生成Client.Factory Map
         for(int i=0; i<interfaceNames.length; i++){
         	String[] split = interfaceNames[i].split("\\.");
-        	String serviceName = split[split.length-1];
-        	
-        	String interfaceName = interfaceNames[i] + "$Iface";
-        	objectClassArray[i] = classLoader.loadClass(interfaceName);        
+        	String serviceName = split[split.length-1];   
 
 			// 加载Client.Factory类
         	String clientFactoryName = interfaceNames[i] + "$Client$Factory";
@@ -120,12 +120,20 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 			cfMap.put(serviceName, clientFactory);
         }
         
+        // set client pool
         setClientPool(cfMap);
         serverProvider.setClientPool(clientPool);
-
-		for( Class<?> objectClass : objectClassArray){
-			addClientProxy(objectClass);
-		}		
+		
+        //添加客户端代理
+		for(int i=0; i<interfaceNames.length; i++){
+        	String[] split = interfaceNames[i].split("\\.");
+        	String serviceName = split[split.length-1];
+        	
+        	String interfaceName = interfaceNames[i] + "$Iface";
+        	Class<?> objectClass = classLoader.loadClass(interfaceName);    
+        	
+        	addClientProxy(serviceName, objectClass);
+		}
 	}
 	
 	/**
@@ -136,38 +144,49 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	private void setClientPool(Map<String,TServiceClientFactory<TServiceClient>> cfMap) 
 			throws Exception{
         clientPool = new ClientPool();
-        clientPool.setClientPoolFactory(new ClientPoolFactory(serverProvider, cfMap, callback));
+        clientPool.setClientPoolFactory(new ClientPoolFactory(serverProvider, cfMap));
         clientPool.setPoolConfig(maxActive, idleTime);
         clientPool.setPool();		
 	}
 	
 	/**
 	 * 添加客户端代理
+	 * @param key : serviceName
 	 * @param objectClass : array of interface class
 	 */
-	private void addClientProxy(Class<?> objectClass){	
-		String[] split = objectClass.getName().split("\\.");
-		final String key = split[split.length-1].split("\\$")[0];
-		
-		Object proxy = Proxy.newProxyInstance(classLoader, new Class[] { objectClass }, 
+	private void addClientProxy(final String key, Class<?> objectClass){	
+		Object proxy = Proxy.newProxyInstance(classLoader, new Class[] {objectClass}, 
 			new InvocationHandler() {
 				@Override
 				public Object invoke(Object proxy, Method method, Object[] args) 
 						throws Throwable{
-					TServiceClient client = clientPool.getPool().borrowObject(key);
-					boolean flag = true;
-					try {
-						return method.invoke(client, args);
-					} catch (Exception e) {
-						flag = false;
-						throw e;
-					} finally {
-						if(flag){
-							clientPool.getPool().returnObject(key,client);
-						}else{
-							clientPool.getPool().invalidateObject(key,client);
+					Throwable exception = null;
+
+					for(int i=0; i < retry; i++){
+						TServiceClient client = null;
+						boolean flag = true;
+						try {
+							client = clientPool.getPool().borrowObject(key);
+							return method.invoke(client, args);
+						} catch (TTransportException | InvocationTargetException e){
+							exception = e;
+							flag = false;
+							logger.error("Could not connect server!");
+							Thread.sleep(retryInterval);
+						} catch (Throwable e) {
+							exception = e;
+							flag = false;
+						} finally {
+							if(client != null){
+								if(flag){
+									clientPool.getPool().returnObject(key,client);
+								}else{
+									clientPool.getPool().invalidateObject(key,client);
+								}
+							}
 						}
 					}
+					throw new WrpcException(exception);
 				}
 			}
 		);

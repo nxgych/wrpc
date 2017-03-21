@@ -10,6 +10,8 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.commons.pool2.BaseKeyedPooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -22,36 +24,39 @@ import com.chen.wrpc.provider.ServerProvider;
  * @created 2016年10月31日
  */
 public class ClientPoolFactory extends BaseKeyedPooledObjectFactory<String,TServiceClient> {  
+	
+	private Logger logger = LoggerFactory.getLogger(getClass());
     
 	//server provider
     private final ServerProvider serverProvider;  
     //{service name : client class}
     private final  Map<String,TServiceClientFactory<TServiceClient>> clientFactoryMap;  
-    //callback
-    private PoolOperationCallBack callback;  
-  
+
+    static interface PoolOperationCallBack {  
+        // 销毁client之前执行  
+        void destroy(TServiceClient client);  
+        // 创建成功是执行  
+        void make(TServiceClient client);
+    }  
+
+	private PoolOperationCallBack callback = new PoolOperationCallBack() {
+		@Override
+		public void make(TServiceClient client) {
+			logger.info("Client created.");
+		}
+		
+		@Override
+		public void destroy(TServiceClient client) {
+			logger.info("Client destroy.");
+		}
+	};
+	
     protected ClientPoolFactory(ServerProvider serverProvider, 
     		 Map<String,TServiceClientFactory<TServiceClient>> clientFactoryMap) throws Exception {  
         this.serverProvider = serverProvider;  
         this.clientFactoryMap = clientFactoryMap;  
     }  
-  
-    protected ClientPoolFactory(ServerProvider serverProvider, 
-    		Map<String,TServiceClientFactory<TServiceClient>> clientFactoryMap,  
-            PoolOperationCallBack callback) throws Exception {  
-        this.serverProvider = serverProvider;  
-        this.clientFactoryMap = clientFactoryMap;  
-        this.callback = callback;  
-    }  
-  
-    static interface PoolOperationCallBack {  
-        // 销毁client之前执行  
-        void destroy(TServiceClient client);  
-  
-        // 创建成功是执行  
-        void make(TServiceClient client);
-    }  
-  
+	
     public void destroyObject(TServiceClient client) throws Exception {  
 		if (callback != null) {
 			try {
