@@ -38,7 +38,7 @@ class Register(object):
                     if(path != old_path):
                         if self.__zk_client.exists(old_path):   
                             self.__zk_client.delete(old_path)
-                            logger.info("delete old path: %" % old_path)
+                            logger.info("delete old path: %s" % old_path)
     
                 logger.info("prelook register path: %s" % path);
                 if not self.__zk_client.exists(path):

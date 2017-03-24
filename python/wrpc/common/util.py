@@ -5,8 +5,11 @@
 Created on 2017年3月4日
 '''
 
+import platform
 import re
 import socket
+import struct
+import fcntl
 
 from wrpc.common import UncheckedException
 
@@ -33,7 +36,18 @@ def get_local_ip():
     """
     get local ip
     """
-    return socket.gethostbyname(socket.gethostname())
+    def get_ip():
+        _system = platform.system()
+        if _system == "Linux":
+            soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            inet = fcntl.ioctl(soc.fileno(), 0x8915, struct.pack('256s', 'eth0')) 
+            return socket.inet_ntoa(inet[20:24]) 
+        return socket.gethostbyname(socket.gethostname())
+    
+    try:
+        return get_ip()
+    except:
+        return get_ip()
 
 def check_hosts(hosts):
     """

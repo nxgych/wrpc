@@ -15,18 +15,12 @@ from .server.factory import ThriftProcessPoolServer
 from .server.server import Server
 from .server.server import ServerConfig
 
-from .manager.load_balance import RoundRobinLoad
-from .manager.provider import AutoProvider
 from .client.factory import ThriftClientFactory
 from .client.proxy import ClientProxy
 
+from .manager.load_balance import RoundRobinLoad
+from .manager.provider import AutoProvider
 from .common import constant
-
-'''
-global client proxy
-you must call the method 'init_client' before you import and use 'Client' object
-'''
-Client = None
 
 def import_module(cstr):
     """
@@ -79,13 +73,13 @@ def create_server(zk_hosts="", zk_timeout=8, namespace="",
     server_config = ServerConfig(global_service, _handlers, port, version, weight, ip)
     return Server(zk_client, server_config, server_clazz, **kwargs)
 
-def init_client(zk_hosts="", zk_timeout=8, namespace="", 
+def create_client(zk_hosts="", zk_timeout=8, namespace="", 
                 provider_class=AutoProvider, server_address="", 
                 global_service="com.wrpc.service", version=constant.VERSION_DEFAULT, 
                 service_ifaces=[], load_balance=RoundRobinLoad, 
                 client_class=ThriftClientFactory, retry=3, retry_interval=0.2, **kwargs):
     """
-    initialize client
+    create client
     @param zk_hosts: zookeeper hosts if provider is AutoProvider else ignore that
     @param zk_timeout: zookeeper connection timeout if provider is AutoProvider else ignore that   
     @param namespace: zookeeper chroot if provider is AutoProvider else ignore that    
@@ -142,8 +136,7 @@ def init_client(zk_hosts="", zk_timeout=8, namespace="",
         split = client_class.split(".")
         module = import_module(split)
         client_clazz = getattr(module, split[-1])
-            
-    global Client                     
+                            
     provider = provider_clazz(server_from, global_service, version, ifaces, load_balance_class)
-    Client = ClientProxy(provider, client_clazz, retry, retry_interval, **kwargs)    
+    return ClientProxy(provider, client_clazz, retry, retry_interval, **kwargs)    
     

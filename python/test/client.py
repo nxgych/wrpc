@@ -5,7 +5,7 @@ Created on 2017年3月15日
 @author: shuai.chen
 '''
 
-from wrpc.shortcut import init_client
+from wrpc.shortcut import create_client
 from test.message import MessageService
 
 CLIENT_CONFIG = {
@@ -15,8 +15,6 @@ CLIENT_CONFIG = {
 }
 
 if __name__ == "__main__":
-    init_client(**CLIENT_CONFIG)
-    
-    from wrpc.shortcut import Client
-#     print Client.call("MessageService", "sendSMS", "110")
-    print Client.call(MessageService, MessageService.Iface.sendSMS, "110")
+    client = create_client(**CLIENT_CONFIG)
+#     print client.call("MessageService", "sendSMS", "110")
+    print client.call(MessageService, MessageService.Iface.sendSMS, "110")

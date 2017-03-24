@@ -54,12 +54,13 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 
 	private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 	
-	private ClientProxy(){}
+	public ClientProxy(){}
 
 	/**
 	 * ClientProxy 单例
 	 * @return ClientProxy object
 	 */
+	@Deprecated
     public static ClientProxy getInstance() {  
     	if(instance != null){
     		//do nothing
@@ -172,7 +173,6 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 							exception = e;
 							flag = false;
 							logger.error("Could not connect server!");
-							Thread.sleep(retryInterval);
 						} catch (Throwable e) {
 							exception = e;
 							flag = false;
@@ -185,6 +185,7 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 								}
 							}
 						}
+						Thread.sleep(retryInterval);
 					}
 					throw new WrpcException(exception);
 				}

@@ -34,7 +34,7 @@ class Provider(object):
     def listen(self):
         pass
     
-    def set_client_proxy(self, client_proxy):
+    def set_client_pool(self, client_pool):
         pass
     
     def close(self):
@@ -68,7 +68,7 @@ class AutoProvider(Provider):
         self.__all_nodes = set()
         self.__live_nodes = set()
         
-        self.client_proxy = None
+        self.client_pool = None
         
     def __get_parent_path(self):
         return "{0}{1}{2}{3}".format(                                   
@@ -95,8 +95,8 @@ class AutoProvider(Provider):
                 self.__live_nodes.add(server_node)  
                 
             self.__load_balance.set_nodes(self.__live_nodes)    
-            if self.client_proxy is not None:
-                self.client_proxy.set_pool()       
+            if self.client_pool is not None:
+                self.client_pool.clear_pool()    
             
         logger.info("Child node changed.")        
     
@@ -106,8 +106,8 @@ class AutoProvider(Provider):
     def get_service_ifaces(self):
         return self.__service_ifaces
     
-    def set_client_proxy(self, client_proxy):
-        self.client_proxy = client_proxy
+    def set_client_pool(self, client_pool):
+        self.client_pool = client_pool
         
     def close(self):
         if self.__zk_client:

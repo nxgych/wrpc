@@ -52,11 +52,14 @@ class ThriftClientFactory(ClientFactory):
         def close(self):
             try:
                 self._iprot.trans.close()
+                self._oprot.trans.close()
+                logger.info("Client closed.") 
             except:
                 logger.error("Client close error!")   
              
         #add close function
         instance.close = partial(close, instance)    
+        logger.info("Client created.") 
         return instance
 
 class GeventClientFactory(ThriftClientFactory):
@@ -87,6 +90,8 @@ class TornadoClientFactory(ClientFactory):
         def close(self):
             try:
                 self._iprot.trans.close()
+                self._oprot.trans.close()
+                logger.info("Client closed.") 
             except:
                 logger.error("Client close error!")     
              

@@ -34,7 +34,8 @@ public class ClientTest {
 		 serverProvider.afterPropertiesSet();
 		 
 		 //客户端
-		 ClientProxy client = ClientProxy.getInstance();
+		 @SuppressWarnings("resource")
+		 ClientProxy client = new ClientProxy();
 		 client.setServerProvider(serverProvider);
 		 client.afterPropertiesSet();
 

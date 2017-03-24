@@ -185,7 +185,7 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 							cachedPath.rebuild();
 							rebuild();
 							//update client proxy pool
-							if (clientPool != null)clientPool.setPool();
+							if (clientPool != null)clientPool.clearPool();
 						}
 					}catch(Exception e){
 						throw e;

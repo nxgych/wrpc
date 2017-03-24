@@ -37,11 +37,8 @@ public class ClientPool implements Closeable{
 		this.pool = pool;
 	}
 	
-	public synchronized void setPool(){
-		if(clientPoolFactory != null && poolConfig != null){
-			pool = new GenericKeyedObjectPool<String, TServiceClient>(clientPoolFactory, poolConfig);			
-			logger.info("Client pool setted.");
-		}
+	public void setPool(){
+		pool = new GenericKeyedObjectPool<String, TServiceClient>(clientPoolFactory, poolConfig);			
 	}
 
 	public GenericKeyedObjectPoolConfig getPoolConfig() {
@@ -78,6 +75,11 @@ public class ClientPool implements Closeable{
 		this.clientPoolFactory = clientPoolFactory;
 	}
 
+	public synchronized void clearPool(){
+		pool.clear();
+		logger.info("Client pool cleared.");
+	}
+	
 	@Override
 	public void close() throws IOException {
 		// TODO Auto-generated method stub

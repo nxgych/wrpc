@@ -14,13 +14,10 @@ import types
 from thrift.transport.TTransport import TTransportException
 
 from wrpc.common.pool import KeyedObjectPool
-from wrpc.common.util import singleton
-
 from .factory import ThriftClientFactory
 
 logger = logging.getLogger(__name__)
 
-@singleton
 class ClientProxy(object):
     """client proxy class"""
     
@@ -39,25 +36,23 @@ class ClientProxy(object):
         self.__provider = provider
         self.__retry = retry
         self.__retry_interval = retry_interval
-        self.__kwargs = kwargs
         
-        self.__set_client_factory(client_class)
-        self.set_pool()
+        self.__set_client_pool(client_class, **kwargs)       
+        self.__listen()
         
-        self.__provider.set_client_proxy(self)
+    def __listen(self):    
+        self.__provider.set_client_pool(self.__client_pool)
         self.__provider.listen()
-        
-    def __set_client_factory(self, client_class):
+        time.sleep(1)
+                
+    def __set_client_pool(self, client_class, **kwargs):
         service_ifaces = self.__provider.get_service_ifaces()
         ifaces = {iface.__name__.split(".")[-1]:iface for iface in service_ifaces}
-        self.__client_factory = client_class(self.__provider, ifaces)               
-        
-    def set_pool(self):
-        self.__pool = KeyedObjectPool(self.__client_factory.create, **self.__kwargs)
-        logger.info("Client pool setted.")
+        client_factory = client_class(self.__provider, ifaces)   
+        self.__client_pool = ClientPool(client_factory, **kwargs)         
     
     def get_pool(self):
-        return self.__pool
+        return self.__client_pool.get_pool()
     
     def get_func(self, skey, fun):
         """
@@ -81,22 +76,41 @@ class ClientProxy(object):
         @param args: args of service function  
         """
         key = skey.__name__.split(".")[-1] if type(skey) == types.ModuleType else skey
+        
         exception = None
         for _ in xrange(self.__retry):
             obj = None
+            flag = True
             try:
-                obj = self.__pool.borrow_obj(key)
+                obj = self.get_pool().borrow_obj(key)
                 func = getattr(obj, fun.__name__) if callable(fun) else getattr(obj, fun)
                 return func(*args)
             except TTransportException, e:
                 exception = e
+                flag = False
                 logger.error("Could not connect server!")
-                time.sleep(self.__retry_interval)
             except Exception, e:
                 exception = e
+                flag = False
             finally:
-                if obj:
-                    self.__pool.return_obj(obj, key)
-                
+                if obj is not None:
+                    if flag:
+                        self.get_pool().return_obj(obj, key)  
+                    else:
+                        self.get_pool().destroy_obj(obj, key)      
+            
+            time.sleep(self.__retry_interval)                
         raise exception      
-        
+
+class ClientPool(object):
+    """client pool"""
+    
+    def __init__(self, client_factory, **kwargs):
+        self.pool = KeyedObjectPool(client_factory.create, **kwargs)
+            
+    def get_pool(self):
+        return self.pool
+ 
+    def clear_pool(self):
+        self.pool.clear() 
+        logger.info("Client pool cleared.")  
