@@ -26,11 +26,11 @@ class ServerFactory(object):
     
     @abstractmethod
     def start(self):
-        raise NotImplemented()
+        raise NotImplementedError
     
     @abstractmethod
     def stop(self):
-        raise NotImplemented()
+        raise NotImplementedError
     
 class ThriftNonblockingServer(ServerFactory): 
     """基于TNonblockingServer的非阻塞server"""

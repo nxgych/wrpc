@@ -25,7 +25,7 @@ class ClientFactory(object):
     
     @abstractmethod
     def create(self, key):
-        raise NotImplemented()
+        raise NotImplementedError
             
 class ThriftClientFactory(ClientFactory):
     """thrift client factory"""

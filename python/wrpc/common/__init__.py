@@ -14,6 +14,15 @@ class WrpcExcetion(Exception):
     def __str__(self):
         return self.message    
     
+class HandlerException(Exception):  
+
+    def __init__(self, class_name):
+        super(HandlerException,self).__init__()
+        self.class_name = class_name
+        
+    def __str__(self):
+        return "'%s' should inherit relevant service Iface!" % self.class_name  
+        
 class UncheckedException(Exception):    
     
     def __init__(self, class_name):

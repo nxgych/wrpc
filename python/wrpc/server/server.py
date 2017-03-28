@@ -12,7 +12,7 @@ from thrift import TMultiplexedProcessor
 
 from .factory import ThriftProcessPoolServer
 from wrpc.manager.register import Register
-from wrpc.common import constant, util
+from wrpc.common import constant, util, HandlerException
 
 logger = logging.getLogger(__name__)
 
@@ -42,24 +42,44 @@ class Server(object):
         self.__server = server_class(mprocessor, ip, port, **self.__kwargs)   
     
     def __get_processor(self):
+        '''
+        get muti processor instance
+        '''
+        #muti processor
         mprocessor = TMultiplexedProcessor.TMultiplexedProcessor()
+        #register handlers 
         for handler in self.__server_config.get_handlers():
-            split = self.get_module_string(handler.__bases__[0]).split(".")
+            #get handler super class
+            bases = handler.__bases__
+            if len(bases) <= 0:
+                raise HandlerException(handler.__name__)
+            #get iface name
+            iface_string = self.get_clazz_string(bases[0])
+            if not iface_string.endswith("Iface"):
+                raise HandlerException(handler.__name__)
+            #get Processor
+            split = iface_string.split(".")
             name = split[-2]
             module = __import__(".".join(split[:-1]), globals={}, locals={}, fromlist=[name])
             processor = getattr(module, "Processor")
+            #register processor
             mprocessor.registerProcessor(name, processor(handler()))
+        #return     
         return mprocessor    
     
     @staticmethod
-    def get_module_string(module):   
-        module_string = str(module)
-        if "'" in module_string:
+    def get_clazz_string(clazz):   
+        '''
+        get class name string
+        @param clazz: class
+        '''
+        class_string = str(clazz)
+        if "'" in class_string:
             pat = "(?<=\\').+?(?=\\')"
-            search = re.search(pat, module_string)
+            search = re.search(pat, class_string)
             if search:
                 return search.group(0)
-        return module_string
+        return class_string
     
     def register_server(self):
         self.__register.register_and_listen(self.__server_config)

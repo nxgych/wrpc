@@ -23,7 +23,7 @@ class LoadBalance(object):
     
     @abstractmethod
     def get_node(self):
-        raise NotImplemented()
+        raise NotImplementedError
     
     def set_nodes(self, nodes):
         self._nodes = self._transfer(nodes)

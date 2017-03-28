@@ -25,11 +25,11 @@ class Provider(object):
     
     @abstractmethod
     def select(self):
-        raise NotImplemented()
+        raise NotImplementedError
 
     @abstractmethod
     def get_service_ifaces(self):
-        raise NotImplemented()
+        raise NotImplementedError
     
     def listen(self):
         pass
