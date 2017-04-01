@@ -13,7 +13,7 @@ import threading
 from kazoo.exceptions import SessionExpiredError
 from kazoo.recipe.watchers import ChildrenWatch
 
-from wrpc.common import constant, util, WrpcExcetion
+from wrpc.common import constant, util, WrpcException
 from wrpc.common.node import ServerNode
 from .load_balance import RoundRobinLoad
 
@@ -127,7 +127,7 @@ class FixedProvider(Provider):
                              default is RoundRobinLoad
         """   
         if not util.check_hosts(server_address):
-            raise WrpcExcetion("Illegal server_address for FixedProvider.")        
+            raise WrpcException("Illegal server_address for FixedProvider.")        
              
         self.__global_service = global_service
         self.__server_address = server_address

@@ -17,7 +17,7 @@ from .server.server import Server
 from .server.server import ServerConfig
 
 from .client.factory import ThriftClientFactory
-from .client.proxy import ClientProxy
+from .client.client import Client
 
 from .manager.load_balance import RoundRobinLoad
 from .manager.provider import AutoProvider
@@ -132,5 +132,5 @@ def create_client(zk_hosts="", zk_timeout=8, namespace="",
     client_clazz = get_class(client_class)
                             
     provider = provider_clazz(server_from, global_service, version, ifaces, load_balance_class)
-    return ClientProxy(provider, client_clazz, retry, retry_interval, **kwargs)    
+    return Client(provider, client_clazz, retry, retry_interval, **kwargs)    
     

@@ -17,4 +17,8 @@ CLIENT_CONFIG = {
 if __name__ == "__main__":
     client = create_client(**CLIENT_CONFIG)
 #     print client.call("MessageService", "sendSMS", "110")
-    print client.call(MessageService, MessageService.Iface.sendSMS, "110")
+#     print client.call(MessageService, MessageService.Iface.sendSMS, "110")
+#     service = client.get_client("MessageService")
+    service = client.get_client(MessageService)
+    print service.sendSMS("110")
+    

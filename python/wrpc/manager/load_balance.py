@@ -9,7 +9,7 @@ import random
 import threading
 
 from abc import ABCMeta,abstractmethod
-from wrpc.common import WrpcExcetion
+from wrpc.common import WrpcException
 
 class LoadBalance(object):
     """
@@ -43,7 +43,7 @@ class RandomLoad(LoadBalance):
     
     def get_node(self):
         if len(self._nodes) <= 0:
-            raise WrpcExcetion("Server not found!")
+            raise WrpcException("Server not found!")
         return random.choice(self._nodes)
   
 class RoundRobinLoad(LoadBalance):
@@ -58,7 +58,7 @@ class RoundRobinLoad(LoadBalance):
     def get_node(self): 
         size = len(self._nodes)
         if size<= 0:
-            raise WrpcExcetion("Server not found!")
+            raise WrpcException("Server not found!")
                  
         with self.__lock:
             if self.__pos >= size:

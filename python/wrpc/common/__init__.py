@@ -5,10 +5,10 @@ Created on 2017年3月6日
 @author: shuai.chen
 '''
 
-class WrpcExcetion(Exception):
+class WrpcException(Exception):
     
     def __init__(self, message):
-        super(WrpcExcetion,self).__init__()
+        super(WrpcException,self).__init__()
         self.message = message
         
     def __str__(self):

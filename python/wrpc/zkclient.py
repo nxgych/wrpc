@@ -11,7 +11,7 @@ import threading
 from kazoo.client import KazooClient
 from kazoo.retry import KazooRetry
 
-from .common import constant, util, WrpcExcetion 
+from .common import constant, util, WrpcException 
 
 class ZkClient(KazooClient):
     """
@@ -28,7 +28,7 @@ class ZkClient(KazooClient):
         @param namespace: chroot
         '''        
         if not util.check_hosts(hosts):
-            raise WrpcExcetion("Illegal hosts for zookeeper connection.")
+            raise WrpcException("Illegal hosts for zookeeper connection.")
         
         self.namespace = self.__get_namespace(namespace)
         zk_hosts = "{0}{1}".format(hosts, self.namespace)
