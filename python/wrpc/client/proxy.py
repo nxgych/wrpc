@@ -39,34 +39,23 @@ class ClientProxy(object):
         
         self.__set_client_pool(client_class, **kwargs)       
         self.__listen()
-        
-    def __listen(self):    
-        self.__provider.set_client_pool(self.__client_pool)
-        self.__provider.listen()
-        time.sleep(1)
-                
+            
     def __set_client_pool(self, client_class, **kwargs):
         service_ifaces = self.__provider.get_service_ifaces()
         ifaces = {iface.__name__.split(".")[-1]:iface for iface in service_ifaces}
         client_factory = client_class(self.__provider, ifaces)   
         self.__client_pool = ClientPool(client_factory, **kwargs)         
-    
+
+    def __listen(self):    
+        self.__provider.set_client_pool(self.__client_pool)
+        self.__provider.listen()
+        time.sleep(1)
+            
     def get_pool(self):
         return self.__client_pool.get_pool()
     
-    def get_func(self, skey, fun):
-        """
-        get function 代理函数
-        @param skey: service module or module name
-        @param fun: service function or function name
-        @use:
-            func = Client.get_func("UserService", "changeName")
-            or
-            func = Client.get_func(UserService, UserService.Iface.changeName)
-            
-            func(*args)
-        """
-        return functools.partial(self.call, skey, fun)
+    def __call__(self, skey, fun, *args):
+        return self.call(skey, fun, *args)
     
     def call(self, skey, fun, *args):
         """
@@ -74,6 +63,9 @@ class ClientProxy(object):
         @param skey: service module or module name
         @param fun: service function or function name
         @param args: args of service function  
+        @use:
+            result = client.call("MessageService", "sendSMS", '10086') ||
+            result = client.call(MessageService, MessageService.Iface.sendSMS, '10086')
         """
         key = skey.__name__.split(".")[-1] if type(skey) == types.ModuleType else skey
         
@@ -100,8 +92,34 @@ class ClientProxy(object):
                         self.get_pool().destroy_obj(obj, key)      
             
             time.sleep(self.__retry_interval)                
-        raise exception      
+        raise exception    
+    
+    def get_service(self, skey):
+        """
+        get service object
+        @param skey: service module or module name
+        @use:
+            service = client.get_service("MessageService") ||
+            service = client.get_service(MessageService)
+            
+            result = service("sendSMS", "10086") || 
+            result = service(MessageService.Iface.sendSMS, "10086")
+        """  
+        return functools.partial(self.call, skey)
 
+    def get_func(self, skey, fun):
+        """
+        get function object
+        @param skey: service module or module name
+        @param fun: service function or function name
+        @use:
+            func = client.get_func("MessageService", "sendSMS") ||
+            func = client.get_func(MessageService, MessageService.Iface.sendSMS)
+            
+            result = func('10086')
+        """
+        return functools.partial(self.call, skey, fun)
+    
 class ClientPool(object):
     """client pool"""
     

@@ -2,6 +2,7 @@
 
 # Welcome to use wrpc and give your advices to me, thank you!
 # email : nxgych@163.com
+# github : https://github.com/nxgych/wrpc
 
 '''
 Created on 2017年3月7日
@@ -22,6 +23,8 @@ from .manager.load_balance import RoundRobinLoad
 from .manager.provider import AutoProvider
 from .common import constant
 
+__all__ = ['create_server', 'create_client']
+
 def import_module(cstr):
     """
     import module
@@ -32,6 +35,17 @@ def import_module(cstr):
         return __import__(cstr[0],None,None)
     return  __import__(".".join(split[:-1]), globals={}, locals={}, fromlist=[split[-2]])    
 
+def get_class(clazz):
+    """
+    get class
+    @param clazz: class or class name
+    """
+    if isinstance(clazz, str):
+        split = clazz.split(".")
+        module = import_module(split)
+        return getattr(module, split[-1]) if hasattr(module, split[-1]) else module  
+    return clazz
+            
 def create_server(zk_hosts="", zk_timeout=8, namespace="", 
                   global_service="com.wrpc.service", handlers=[], port=constant.PORT_DEFAULT, 
                   version=constant.VERSION_DEFAULT, weight=constant.WEIGHT_DEFAULT, ip=None, 
@@ -50,23 +64,18 @@ def create_server(zk_hosts="", zk_timeout=8, namespace="",
     @param ip: ip address if you force config it instead of getting local ip 
     @param kwargs:
         process_num: server process num default is cpu num
-        coroutines_num: gevent coroutines num default is 100
-        threads_num: TNonblockingServer threads num
+        coroutines_num: gevent coroutines num default is 100 if server_class is GeventProcessPoolServer
+                        else ignore that
+        threads_num: ThriftNonblockingServer threads num if server_class is ThriftNonblockingServer
+                     else ignore that
     """
     #server class
-    server_clazz = server_class
-    if isinstance(server_class, str):
-        split = server_class.split(".")
-        module = import_module(split)
-        server_clazz = getattr(module, split[-1])    
+    server_clazz = get_class(server_class) 
     
+    #handler instances
     _handlers = []
     for handler in handlers:
-        clazz = handler
-        if isinstance(handler, str):
-            split = handler.split(".")
-            module = import_module(split)
-            clazz = getattr(module, split[-1])
+        clazz = get_class(handler)
         _handlers.append(clazz)    
             
     zk_client = ZkClient.make(zk_hosts, zk_timeout, namespace) if zk_hosts else None
@@ -100,27 +109,16 @@ def create_client(zk_hosts="", zk_timeout=8, namespace="",
         pool_wait_timeout: client pool block time, default is None means forever          
     """
     #provider class
-    provider_clazz = provider_class
-    if isinstance(provider_class, str):
-        split = provider_class.split(".")
-        module = import_module(split)
-        provider_clazz = getattr(module, split[-1])
+    provider_clazz = get_class(provider_class)
     
+    #service ifaces
     ifaces = []
     for iface in service_ifaces:
-        iface_class = iface
-        if isinstance(iface, str):
-            split = iface.split(".")
-            module = import_module(split)
-            iface_class = getattr(module, split[-1]) if hasattr(module, split[-1]) else module
+        iface_class = get_class(iface)
         ifaces.append(iface_class)         
 
     #load balance class
-    load_balance_class = load_balance
-    if isinstance(load_balance, str):
-        split = load_balance.split(".")
-        module = import_module(split)
-        load_balance_class = getattr(module, split[-1])
+    load_balance_class = get_class(load_balance)
     
     #provider class
     if provider_clazz == AutoProvider:
@@ -131,11 +129,7 @@ def create_client(zk_hosts="", zk_timeout=8, namespace="",
         server_from = server_address
 
     #client class
-    client_clazz = client_class
-    if isinstance(client_class, str):
-        split = client_class.split(".")
-        module = import_module(split)
-        client_clazz = getattr(module, split[-1])
+    client_clazz = get_class(client_class)
                             
     provider = provider_clazz(server_from, global_service, version, ifaces, load_balance_class)
     return ClientProxy(provider, client_clazz, retry, retry_interval, **kwargs)    

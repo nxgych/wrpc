@@ -32,6 +32,19 @@ def unchecked(cls):
         raise UncheckedException(cls.__name__)
     return _deco
 
+def get_clazz_string(clazz):   
+    '''
+    get class name string
+    @param clazz: class
+    '''
+    class_string = str(clazz)
+    if "'" in class_string:
+        pat = "(?<=\\').+?(?=\\')"
+        search = re.search(pat, class_string)
+        if search:
+            return search.group(0)
+    return class_string
+
 def get_local_ip():
     """
     get local ip

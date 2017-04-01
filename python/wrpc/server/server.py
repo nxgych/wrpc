@@ -6,7 +6,6 @@ Created on 2017年3月4日
 '''
 from __future__ import absolute_import
 
-import re
 import logging
 from thrift import TMultiplexedProcessor
 
@@ -31,15 +30,14 @@ class Server(object):
         """
         self.__zk_client = zk_client
         self.__server_config = server_config
-        self.__kwargs = kwargs
         
         self.__register = Register(zk_client)
-        self.__set_server(server_class)
+        self.__set_server(server_class, **kwargs)
 
-    def __set_server(self, server_class):
+    def __set_server(self, server_class, **kwargs):
         mprocessor = self.__get_processor()
         ip, port = self.__server_config.get_server_ip(), self.__server_config.get_port()
-        self.__server = server_class(mprocessor, ip, port, **self.__kwargs)   
+        self.__server = server_class(mprocessor, ip, port, **kwargs)   
     
     def __get_processor(self):
         '''
@@ -54,7 +52,7 @@ class Server(object):
             if len(bases) <= 0:
                 raise HandlerException(handler.__name__)
             #get iface name
-            iface_string = self.get_clazz_string(bases[0])
+            iface_string = util.get_clazz_string(bases[0])
             if not iface_string.endswith("Iface"):
                 raise HandlerException(handler.__name__)
             #get Processor
@@ -67,26 +65,14 @@ class Server(object):
         #return     
         return mprocessor    
     
-    @staticmethod
-    def get_clazz_string(clazz):   
-        '''
-        get class name string
-        @param clazz: class
-        '''
-        class_string = str(clazz)
-        if "'" in class_string:
-            pat = "(?<=\\').+?(?=\\')"
-            search = re.search(pat, class_string)
-            if search:
-                return search.group(0)
-        return class_string
-    
-    def register_server(self):
+    def _register_server(self):
         self.__register.register_and_listen(self.__server_config)
      
     def start(self):
+        '''start server'''
+        self._register_server()
+        
         logger.info("start server.")
-        self.register_server()
         if self.__server:
             self.__server.start() 
             
@@ -98,7 +84,7 @@ class Server(object):
             
 class ServerConfig(object):
     
-    def __init__(self,global_service, handlers,
+    def __init__(self, global_service, handlers,
                  port=constant.PORT_DEFAULT, version=constant.VERSION_DEFAULT,
                  weight=constant.WEIGHT_DEFAULT, ip=None):   
         """

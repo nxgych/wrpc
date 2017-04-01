@@ -22,6 +22,11 @@ class ZkClient(KazooClient):
     __lock = threading.RLock()
     
     def __init__(self, hosts="127.0.0.1:2181", timeout=10, namespace="", **kwargs):
+        '''
+        @param hosts: zookeeper hosts 
+        @param timeout: timeout  
+        @param namespace: chroot
+        '''        
         if not util.check_hosts(hosts):
             raise WrpcExcetion("Illegal hosts for zookeeper connection.")
         

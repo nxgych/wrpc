@@ -14,6 +14,7 @@ from kazoo.exceptions import SessionExpiredError
 logger = logging.getLogger(__name__)
 
 class Register(object):
+    """register server"""
     
     __lock = threading.RLock()
     
@@ -27,7 +28,7 @@ class Register(object):
         with self.__lock:
             try:
                 path = ""
-                if server_config.get_ip():
+                if server_config.get_ip() is not None:
                     path = server_config.get_path()
                 else:
                     old_path = server_config.get_path()
@@ -45,6 +46,8 @@ class Register(object):
                     path = self.__zk_client.create(path, ephemeral=True)   
             except SessionExpiredError:
                 logger.warn("Zookeeper Client session timed out.") 
+            except Exception:
+                logger.error("Server register error!")   
                 
     def register_and_listen(self, server_config):
         if self.__zk_client is None:
