@@ -125,11 +125,19 @@ class ServerConfig(object):
                                     constant.ZK_SEPARATOR_DEFAULT,
                                     self.__global_service,
                                     constant.ZK_SEPARATOR_DEFAULT,
-                                    self.__version ,
+                                    self.__version,
                                     constant.ZK_SEPARATOR_DEFAULT,
                                     self.get_node_name()                                         
                                     )    
-        
+
+    def get_parent_path(self):
+        return "{0}{1}{2}{3}".format(                                    
+                                    constant.ZK_SEPARATOR_DEFAULT,
+                                    self.__global_service,
+                                    constant.ZK_SEPARATOR_DEFAULT,
+                                    self.__version                                     
+                                    ) 
+                
     def get_node_name(self):
         return "{0}:{1}:{2}".format(
                                      self.get_server_ip(),

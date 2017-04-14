@@ -17,6 +17,6 @@ class Proxy(object):
         return functools.partial(self.call, attr)
     
     @abstractmethod
-    def call(self, func, *args):
+    def call(self, fun, *args):
         raise NotImplementedError
     

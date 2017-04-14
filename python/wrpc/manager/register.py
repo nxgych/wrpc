@@ -43,7 +43,7 @@ class Register(object):
     
                 logger.info("prelook register path: %s" % path);
                 if not self.__zk_client.exists(path):
-                    path = self.__zk_client.create(path, ephemeral=True)   
+                    self.__zk_client.create(path, ephemeral=True)   
             except SessionExpiredError:
                 logger.warn("Zookeeper Client session timed out.") 
             except Exception:
@@ -52,7 +52,8 @@ class Register(object):
     def register_and_listen(self, server_config):
         if self.__zk_client is None:
             return 
-        
+
+        self.__zk_client.ensure_path(server_config.get_parent_path())        
         self._register(server_config)
         
         def state_listener(state): 
