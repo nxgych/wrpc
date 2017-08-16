@@ -1,4 +1,4 @@
-#coding:utf-8
+#-*- coding: utf-8 -*-
 
 # Welcome to use wrpc and give your advices to me, thank you!
 # email : nxgych@163.com
