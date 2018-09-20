@@ -32,7 +32,7 @@ class LoadBalance(object):
     def _transfer(self, nodes):
         node_list = []
         for node in nodes:
-            for _ in xrange(node.weight):
+            for _ in range(node.weight):
                 node_list.append(node)
         random.shuffle(node_list)        
         return node_list

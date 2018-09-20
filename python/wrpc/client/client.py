@@ -149,7 +149,7 @@ class ClientProxy(Proxy):
         '''
         key = self.service
         exception = None
-        for _ in xrange(self.retry):
+        for _ in range(self.retry):
             obj = None
             flag = True
             try:
@@ -159,11 +159,11 @@ class ClientProxy(Proxy):
                 
                 func = getattr(obj, fun)
                 return func(*args)
-            except TTransportException, e:
+            except TTransportException as e:
                 exception = e
                 flag = False
                 logger.error("Could not connect server!")
-            except Exception, e:
+            except Exception as e:
                 exception = e
                 flag = False
             finally:

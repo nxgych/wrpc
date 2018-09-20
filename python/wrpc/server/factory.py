@@ -70,8 +70,8 @@ class ThriftNonblockingServer(ServerFactory):
                 signal.signal(signal.SIGINT, add_clean_shutdown(sigint_handler))
             else:
                 signal.signal(signal.SIGINT, clean_shutdown)
-        except Exception, e:
-            raise e
+        except Exception:
+            raise
 
     @staticmethod
     def __create_server(processor, ip, port):
@@ -124,8 +124,8 @@ class ThriftProcessPoolServer(ServerFactory):
                 signal.signal(signal.SIGINT, add_clean_shutdown(sigint_handler))
             else:
                 signal.signal(signal.SIGINT, clean_shutdown)
-        except Exception, e:
-            raise e
+        except Exception:
+            raise
 
     @staticmethod
     def __create_server(processor, ip, port):
@@ -184,8 +184,8 @@ class GeventProcessPoolServer(ServerFactory):
                 signal.signal(signal.SIGINT, add_clean_shutdown(sigint_handler))
             else:
                 signal.signal(signal.SIGINT, clean_shutdown)
-        except Exception, e:
-            raise e
+        except Exception:
+            raise
 
     @staticmethod
     def __create_server(processor, ip, port):

@@ -48,7 +48,7 @@ class GProcessPoolServer(TProcessPoolServer):
                 pool.spawn(self.serveClient, client)
             except (KeyboardInterrupt, SystemExit):
                 return 0
-            except Exception, x:
+            except Exception as x:
                 logger.exception(x)
 
     def serve(self):
@@ -67,7 +67,7 @@ class GProcessPoolServer(TProcessPoolServer):
                 w.daemon = True
                 w.start()
                 self.workers.append(w)
-            except Exception, x:
+            except Exception as x:
                 logger.exception(x)
 
         # wait until all workers init finish
@@ -82,7 +82,7 @@ class GProcessPoolServer(TProcessPoolServer):
                     break
             except (SystemExit, KeyboardInterrupt):
                 break
-            except Exception, x:
+            except Exception as x:
                 logger.exception(x)
 
         self.isRunning.value = False
