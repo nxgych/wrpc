@@ -6,7 +6,7 @@ Created on 2017年3月6日
 @author: shuai.chen
 '''
 
-import Queue
+from queue import Queue
 import threading
 
 class ObjectPool(object):
@@ -31,7 +31,7 @@ class ObjectPool(object):
         
         #队列计数
         self.count = 0
-        self.queue = Queue.Queue(self.max_size)
+        self.queue = Queue(self.max_size)
         
     def __len__(self):
         return self.queue.qsize()    
@@ -103,7 +103,7 @@ class KeyedObjectPool(ObjectPool):
             
     def __check(self, key):
         if key not in self.queue_map:
-            self.queue_map[key] = [Queue.Queue(self.max_size), 0]
+            self.queue_map[key] = [Queue(self.max_size), 0]
      
     def __put_obj(self, obj, key):
         self.__check(key)

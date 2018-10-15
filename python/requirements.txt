@@ -1,6 +1,5 @@
 thrift>=0.9
 kazoo>=2.0
 gevent>=1.0
-futures
-tornado
+tornado==4.5.3
 requests
