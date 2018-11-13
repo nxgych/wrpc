@@ -90,7 +90,7 @@ class KeyedObjectPool(ObjectPool):
         self.queue = None
         
     def __len__(self):
-        return sum([v[0].qsize() for v in self.queue_map.itervalues()])    
+        return sum([v[0].qsize() for v in self.queue_map.values()])    
 
     def __contains__(self, key):
         return key in self.queue_map
@@ -115,7 +115,7 @@ class KeyedObjectPool(ObjectPool):
 
     def clear(self):
         with self._lock:
-            for v in self.queue_map.itervalues():
+            for v in self.queue_map.values():
                 while not v[0].empty():
                     obj = v[0].get()
                     self._close_obj(obj) 
