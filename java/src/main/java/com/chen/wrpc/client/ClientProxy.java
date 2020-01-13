@@ -61,18 +61,18 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	 * @return ClientProxy object
 	 */
 	@Deprecated
-    public static ClientProxy getInstance() {  
-    	if(instance != null){
-    		//do nothing
-    	}else{
-	        synchronized (ClientProxy.class) {  
-	            if(instance == null){//二次检查  
-	                instance = new ClientProxy();  
-	            }  
-	        } 
-    	}
-        return instance;  
-    } 
+        public static ClientProxy getInstance() {  
+		if(instance != null){
+			//do nothing
+		}else{
+			synchronized (ClientProxy.class) {  
+			    if(instance == null){//二次检查  
+				instance = new ClientProxy();  
+			    }  
+			} 
+		}
+		return instance;  
+        } 
 		
 	public void setMaxActive(Integer maxActive) {
 		this.maxActive = maxActive;
