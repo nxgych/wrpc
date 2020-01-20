@@ -22,7 +22,7 @@ import com.chen.wrpc.common.WrpcException;
 import com.chen.wrpc.provider.ServerProvider;
   
 /**
- * 客户端代理类, 待整理------
+ * 客户端代理类
  * @author shuai.chen
  * @created 2016年10月31日
  */
@@ -61,18 +61,18 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	 * @return ClientProxy object
 	 */
 	@Deprecated
-        public static ClientProxy getInstance() {  
-		if(instance != null){
-			//do nothing
-		}else{
-			synchronized (ClientProxy.class) {  
-			    if(instance == null){//二次检查  
-				instance = new ClientProxy();  
-			    }  
-			} 
-		}
-		return instance;  
-        } 
+    public static ClientProxy getInstance() {  
+	if(instance != null){
+		//do nothing
+	}else{
+		synchronized (ClientProxy.class) {  
+		    if(instance == null){//二次检查  
+			instance = new ClientProxy();  
+		    }  
+		} 
+	}
+	    return instance;  
+    } 
 		
 	public void setMaxActive(Integer maxActive) {
 		this.maxActive = maxActive;
@@ -127,13 +127,13 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 		
         //添加客户端代理
 		for(int i=0; i<interfaceNames.length; i++){
-        	String[] split = interfaceNames[i].split("\\.");
-        	String serviceName = split[split.length-1];
-        	
-        	String interfaceName = interfaceNames[i] + "$Iface";
-        	Class<?> objectClass = classLoader.loadClass(interfaceName);    
-        	
-        	addClientProxy(serviceName, objectClass);
+	        	String[] split = interfaceNames[i].split("\\.");
+	        	String serviceName = split[split.length-1];
+	        	
+	        	String interfaceName = interfaceNames[i] + "$Iface";
+	        	Class<?> objectClass = classLoader.loadClass(interfaceName);    
+	        	
+	        	addClientProxy(serviceName, objectClass);
 		}
 	}
 	

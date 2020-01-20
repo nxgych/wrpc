@@ -87,11 +87,11 @@ public class ServerRegisterListener implements ConnectionStateListener{
                 }
                 break;   
             } catch (InterruptedException e) {  
-            	logger.error("Register listener interrupted."); 
+            		logger.error("Register listener interrupted."); 
                 break;  
             } catch (Exception e){  
-            	logger.error("Register listener error.");  
-            	break;
+	            	logger.error("Register listener error.");  
+	            	break;
             }  
         }  
     } 

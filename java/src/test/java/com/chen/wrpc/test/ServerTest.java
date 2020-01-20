@@ -1,9 +1,9 @@
 package com.chen.wrpc.test;
 
-import com.chen.wrpc.client.ZookeeperFactory;
 import com.chen.wrpc.server.Server;
 import com.chen.wrpc.server.ServerConfig;
 import com.chen.wrpc.test.gen.impl.MessageServiceImpl;
+import com.chen.wrpc.zk.ZookeeperFactory;
 
 /**
  * @author shuai.chen

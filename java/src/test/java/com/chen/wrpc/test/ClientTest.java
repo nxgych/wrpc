@@ -1,10 +1,10 @@
 package com.chen.wrpc.test;
 
 import com.chen.wrpc.client.ClientProxy;
-import com.chen.wrpc.client.ZookeeperFactory;
 import com.chen.wrpc.provider.ServerProviderAuto;
 
 import com.chen.wrpc.test.gen.MessageService;
+import com.chen.wrpc.zk.ZookeeperFactory;
 
 /**
  * @author shuai.chen

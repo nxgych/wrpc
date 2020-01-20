@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 基于 PathChildrenCache 的服务提供类, 待整理------
+ * 基于 PathChildrenCache 的服务提供类
  * @author shuai.chen
  * @created 2016年10月31日
  */
@@ -168,14 +168,14 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 							logger.info("PathChildrenCache init ...");
 							break;
 	                    case CHILD_ADDED: 
-	                    	logger.info("Child node added.");
-	                    	break;
+		                    	logger.info("Child node added.");
+		                    	break;
 	                    case CHILD_UPDATED: 
-	                    	logger.info("Child node updated.");
-	                    	break;
+		                    	logger.info("Child node updated.");
+		                    	break;
 	                    case CHILD_REMOVED: 
-	                    	logger.info("Child node removed.");	
-	                    	break;
+		                    	logger.info("Child node removed.");	
+		                    	break;
 						default:
 							// do nothing
 					}
