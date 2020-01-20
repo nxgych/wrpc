@@ -38,10 +38,7 @@ public class ServerConfig implements InitializingBean{
      */
 	public String getPath(){
 		StringBuffer sb = new StringBuffer();
-		sb.append(Constant.ZK_SEPARATOR_DEFAULT);
-		sb.append(globalService);
-		sb.append(Constant.ZK_SEPARATOR_DEFAULT);
-		sb.append(version);
+		sb.append(getParentPath());
 		sb.append(Constant.ZK_SEPARATOR_DEFAULT);
 		sb.append(getNodeName());
 		return sb.toString();		

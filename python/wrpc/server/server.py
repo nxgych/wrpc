@@ -122,11 +122,8 @@ class ServerConfig(object):
         self.__local_ip = util.get_local_ip()
         
     def get_path(self):
-        return "{0}{1}{2}{3}{4}{5}".format(                                    
-                                    constant.ZK_SEPARATOR_DEFAULT,
-                                    self.__global_service,
-                                    constant.ZK_SEPARATOR_DEFAULT,
-                                    self.__version,
+        return "{0}{1}{2}".format( 
+                                    self.get_parent_path(),                                   
                                     constant.ZK_SEPARATOR_DEFAULT,
                                     self.get_node_name()                                         
                                     )    
