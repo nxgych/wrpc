@@ -9,7 +9,7 @@ import os
 import sys
 
 Thrift = "thrift" # "/usr/local/bin/thrift" 
-Languages = ["java", "python"]
+Languages = ["java", "python", "go"]
 
 def gen_code(lan, model):
     """
