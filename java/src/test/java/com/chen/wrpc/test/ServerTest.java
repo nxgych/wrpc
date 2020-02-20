@@ -1,9 +1,9 @@
 package com.chen.wrpc.test;
 
+import com.chen.wrpc.zk.ZookeeperFactory;
 import com.chen.wrpc.server.Server;
 import com.chen.wrpc.server.ServerConfig;
 import com.chen.wrpc.test.gen.impl.MessageServiceImpl;
-import com.chen.wrpc.zk.ZookeeperFactory;
 
 /**
  * @author shuai.chen
@@ -27,8 +27,8 @@ public class ServerTest {
 		
 		 //服务配置
          ServerConfig serverConfig = new ServerConfig();
-         serverConfig.setGlobalService("com.wrpc.test");
-         serverConfig.setServiceImpls(new Object[]{new MessageServiceImpl()});
+         serverConfig.setGlobalServiceName("com.wrpc.test");
+         serverConfig.setServiceProcessors(new Object[]{new MessageServiceImpl()});
          serverConfig.afterPropertiesSet();
          
          //服务类

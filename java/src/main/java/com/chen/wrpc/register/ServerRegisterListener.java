@@ -34,23 +34,23 @@ public class ServerRegisterListener implements ConnectionStateListener{
             zkClient.start();  
         } 
 	      
-    	switch(connectionState){
-    	    case CONNECTED:
-	    		logger.info("Connection is successful!");
-	    		break;
-	    	case LOST:
-	    		logger.info("Connection is lost!");
-	    		break;
-	    	case SUSPENDED:
-	    		logger.info("Connection is suspended!");
-	    		break;	    
-	    	case RECONNECTED:
-	    		logger.info("Connection is reconection!");
-	    		break;		    		
-	    	default:
-	    		// do nothing	
-    	}
-    	//recreated any situation
+	    	switch(connectionState){
+	    	    case CONNECTED:
+		    		logger.info("Connection is successful!");
+		    		break;
+		    	case LOST:
+		    		logger.info("Connection is lost!");
+		    		break;
+		    	case SUSPENDED:
+		    		logger.info("Connection is suspended!");
+		    		break;	    
+		    	case RECONNECTED:
+		    		logger.info("Connection is reconection!");
+		    		break;		    		
+		    	default:
+		    		// do nothing	
+	    	}
+	    	//recreated any situation
         while(true){  
             try {  
             	synchronized(this){

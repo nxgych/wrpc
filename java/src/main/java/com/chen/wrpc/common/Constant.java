@@ -7,7 +7,7 @@ package com.chen.wrpc.common;
 public class Constant {
 	
 	//默认server port
-	public static final Integer DEFAULT_PORT = 8603;
+	public static final Integer DEFAULT_PORT = 3068;
 
 	//默认服务版本号
 	public static final String DEFAULT_VERSION = "1.0.0";

@@ -20,9 +20,9 @@ public class ServerConfig implements InitializingBean{
 	private Integer weight = Constant.DEFAULT_WEIGHT;
 
 	//global service name
-	private String globalService;
+	private String globalServiceName = "";
     // 实现类  
-    private Object[] serviceImpls;
+    private Object[] serviceProcessors;
 
 	//ip address if you force config it instead of getting local ip 
 	private String ip;
@@ -47,8 +47,10 @@ public class ServerConfig implements InitializingBean{
 	public String getParentPath(){
 		StringBuffer sb = new StringBuffer();
 		sb.append(Constant.ZK_SEPARATOR_DEFAULT);
-		sb.append(globalService);
-		sb.append(Constant.ZK_SEPARATOR_DEFAULT);
+		if(globalServiceName != ""){
+			sb.append(globalServiceName);
+			sb.append(Constant.ZK_SEPARATOR_DEFAULT);
+		}
 		sb.append(version);
 		return sb.toString();	
 	}
@@ -84,11 +86,11 @@ public class ServerConfig implements InitializingBean{
 		this.version = version;
 	}
 
-	public String getGlobalService() {
-		return globalService;
+	public String getGlobalServiceName() {
+		return globalServiceName;
 	}
-	public void setGlobalService(String globalService) {
-		this.globalService = globalService;
+	public void setGlobalServiceName(String globalServiceName) {
+		this.globalServiceName = globalServiceName;
 	}
 
 	public Integer getWeight() {
@@ -98,11 +100,11 @@ public class ServerConfig implements InitializingBean{
 		this.weight = weight;
 	}
 	
-	public Object[] getServiceImpls() {
-		return serviceImpls;
+	public Object[] getServiceProcessors() {
+		return serviceProcessors;
 	}
-	public void setServiceImpls(Object[] serviceImpls) {
-		this.serviceImpls = serviceImpls;
+	public void setServiceProcessors(Object[] serviceProcessors) {
+		this.serviceProcessors = serviceProcessors;
 	}
 
 	public String getIp() {

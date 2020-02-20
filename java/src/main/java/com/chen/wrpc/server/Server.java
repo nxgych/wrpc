@@ -35,6 +35,8 @@ public class Server implements InitializingBean,Closeable{
 	private ServerThread serverThread;
 	//server register object
 	private ServerRegister serverRegister;
+	
+	public Server(){}
 		
 	public void setZkClient(CuratorFramework zkClient){
 		this.zkClient = zkClient;
@@ -52,36 +54,36 @@ public class Server implements InitializingBean,Closeable{
 	 * set server thread 
 	 */
 	public void setServerThread(){
-    	try{
+    		try{
 	        TMultiplexedProcessor processor = new TMultiplexedProcessor();
 
-	        Object[] serviceImpls = serverConfig.getServiceImpls();
+	        Object[] serviceImpls = serverConfig.getServiceProcessors();
 	        for(int i=0; i<serviceImpls.length; i++){
-	        	Class<?> serviceClass = serviceImpls[i].getClass();
-	        	
-	        	String serviceName = null;
-	        	Class<?>[] interfaces = serviceClass.getInterfaces();
-	        	for (Class<?> clazz : interfaces) {
-	    			String cname = clazz.getSimpleName();
-	    			if (!cname.equals("Iface")) {
-	    				continue;
-	    			}	
-	    			
-	    			serviceName = clazz.getEnclosingClass().getName();
-	    			Class<?> sProcessor = Class.forName(serviceName + "$Processor"); 
-	    			Constructor<?> con = sProcessor.getConstructor(clazz); 
-
-	    			String serviceSimpleName = clazz.getEnclosingClass().getSimpleName();
-	    			TProcessor tProcessor = (TProcessor)con.newInstance(serviceImpls[i]);
-					processor.registerProcessor(serviceSimpleName, tProcessor);    
-					break;	    			
-	        	}               
+		        	Class<?> serviceClass = serviceImpls[i].getClass();
+		        	
+		        	String serviceName = null;
+		        	Class<?>[] interfaces = serviceClass.getInterfaces();
+		        	for (Class<?> clazz : interfaces) {
+		    			String cname = clazz.getSimpleName();
+		    			if (!cname.equals("Iface")) {
+		    				continue;
+		    			}	
+		    			
+		    			serviceName = clazz.getEnclosingClass().getName();
+		    			Class<?> sProcessor = Class.forName(serviceName + "$Processor"); 
+		    			Constructor<?> con = sProcessor.getConstructor(clazz); 
+	
+		    			String serviceSimpleName = clazz.getEnclosingClass().getSimpleName();
+		    			TProcessor tProcessor = (TProcessor)con.newInstance(serviceImpls[i]);
+						processor.registerProcessor(serviceSimpleName, tProcessor);    
+						break;	    			
+		         }               
 	        }   
 	        
 	        this.serverThread = new ServerThread(processor);	   	        
-    	}catch(Exception e){
-    		throw new WrpcException(e); 
-    	}		
+	    	}catch(Exception e){
+	    		throw new WrpcException(e); 
+	    	}		
 	}
 	
 	public void setServerRegister(ServerRegister serverRegister){
@@ -89,14 +91,16 @@ public class Server implements InitializingBean,Closeable{
 	}
 	
 	public void setServerRegister(){
-		this.serverRegister = new ServerRegisterImpl(zkClient);
+		if(zkClient != null) {
+			this.serverRegister = new ServerRegisterImpl(zkClient);
+		}
 	}
 	
 	/**
 	 * 服务注册
 	 */
 	public void register(){
-		if(serverConfig != null){
+		if(serverConfig != null && serverRegister != null){
 			serverRegister.registerAndListen(serverConfig);  
 		}
 	}
@@ -110,16 +114,16 @@ public class Server implements InitializingBean,Closeable{
 	}  
 
     public void start() {  
-    	serverThread.start();
+    		serverThread.start();
     }
 
     public void close() {  
-    	if(serverThread != null){
-    		serverThread.stopServer();  
-    	}
-    	if(zkClient != null){
-    		zkClient.close();
-    	}
+	    	if(serverThread != null){
+	    		serverThread.stopServer();  
+	    	}
+	    	if(zkClient != null){
+	    		zkClient.close();
+	    	}
     } 
     
     /**
@@ -133,9 +137,9 @@ public class Server implements InitializingBean,Closeable{
 		ServerThread(TProcessor processor) throws Exception {  
 			TNonblockingServerSocket transport = new TNonblockingServerSocket(serverConfig.getPort());  	
             TThreadedSelectorServer.Args args = new TThreadedSelectorServer.Args(transport);   
-        	args.transportFactory(new TFramedTransport.Factory());    
-        	args.protocolFactory(new TCompactProtocol.Factory());  
-        	args.processor(processor);                
+	        	args.transportFactory(new TFramedTransport.Factory());    
+	        	args.protocolFactory(new TCompactProtocol.Factory());  
+	        	args.processor(processor);                
             server = new TThreadedSelectorServer(args);  
         }  
   

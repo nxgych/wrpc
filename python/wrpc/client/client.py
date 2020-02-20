@@ -44,17 +44,17 @@ class Client(object):
         self.__listen()
             
     def __set_client_pool(self, client_class, **kwargs):
-        service_ifaces = self.__provider.get_service_ifaces()
+        service_ifaces = self.__provider.get_services()
         ifaces = {iface.__name__.split(".")[-1]:iface for iface in service_ifaces}
         client_factory = client_class(self.__provider, ifaces)   
         self.__client_pool = ClientPool(client_factory, **kwargs)     
         
     def __add_client_proxy(self, retry, retry_interval):   
-        service_ifaces = self.__provider.get_service_ifaces()
+        service_ifaces = self.__provider.get_services()
         pool = self.__client_pool
         for iface in service_ifaces:
-            service = iface.__name__.split(".")[-1]
-            self.__proxy_map[service] = ClientProxy(service, pool, retry, retry_interval)     
+            service_name = iface.__name__.split(".")[-1]
+            self.__proxy_map[service_name] = ClientProxy(service_name, pool, retry, retry_interval)     
 
     def __listen(self):    
         self.__provider.set_client_pool(self.__client_pool)
@@ -67,7 +67,7 @@ class Client(object):
         @param skey: service module or module name
         @use:
             service = client.get_client('MessageService') ||
-            service = client.get_client('MessageService')
+            service = client.get_client(MessageService)
             
             result = service.sendSMS('10086')
         """  
@@ -130,14 +130,14 @@ class ClientPool(object):
 class ClientProxy(Proxy):
     '''client proxy class'''
     
-    def __init__(self, service, pool, retry, retry_interval): 
+    def __init__(self, service_name, pool, retry, retry_interval): 
         '''
         @param service: service name
         @param pool: client pool  
         @param retry: retry access times, default is 3
         @param retry_interval: retry interval time, default 0.2s        
         '''
-        self.service = service
+        self.service_name = service_name
         self.pool = pool   
         self.retry = retry
         self.retry_interval = retry_interval
@@ -147,7 +147,7 @@ class ClientProxy(Proxy):
         @param fun: function name
         @param args: args of service function        
         '''
-        key = self.service
+        key = self.service_name
         exception = None
         for _ in range(self.retry):
             obj = None

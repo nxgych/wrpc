@@ -10,8 +10,8 @@ from test.message import MessageService
 
 CLIENT_CONFIG = {
     "zk_hosts":"127.0.0.1:2181",
-    "global_service":"com.wrpc.test",
-    "service_ifaces":["test.message.MessageService"]
+    "global_service_name":"com.wrpc.test",
+    "services":["test.message.MessageService"]
 }
 
 if __name__ == "__main__":
@@ -20,5 +20,5 @@ if __name__ == "__main__":
 #     print client.call(MessageService, MessageService.Iface.sendSMS, "110")
 #     service = client.get_client("MessageService")
     service = client.get_client(MessageService)
-    print service.sendSMS("110")
+    print(service.sendSMS("110"))
     

@@ -21,12 +21,14 @@ class ObjectPool(object):
         @param args: parmas of func  
         @param kwargs: 
             pool_max_size:  pool max size, default is 8    
+            pool_max_active_size : pool max active size, default is 4    
             pool_wait_timeout:  pool block time, default is None means forever          
         """
         super(ObjectPool, self).__init__()
         self.func = func
         self.args = args
-        self.max_size = kwargs.get("pool_max_size",8)
+        self.max_size = kwargs.get("pool_max_size", 8)
+        self.max_active_size = kwargs.get("pool_max_active_size", 4)
         self.wait_timeout = kwargs.get("pool_wait_timeout")
         
         #队列计数
@@ -47,11 +49,14 @@ class ObjectPool(object):
                 pass         
     
     def __put_obj(self, obj):
-        if self.queue.qsize() < self.max_size:
+        if self.size() < self.max_size:
             self.queue.put(obj) 
         else:
             self._close_obj(obj)
             del obj  
+            
+    def size(self):
+        return self.queue.qsize()        
     
     def clear(self):
         with self._lock:
@@ -70,14 +75,18 @@ class ObjectPool(object):
     
     def return_obj(self, obj):
         with self._lock:
-            self.__put_obj(obj)    
+            if self.size() <= self.max_active_size:
+                self.__put_obj(obj)    
+            else:
+                self.destroy_obj(obj)    
             
     def destroy_obj(self, obj):
         with self._lock:
-            self._close_obj(obj)
-            del obj  
-            if self.count > 0:
-                self.count -= 1               
+            if obj:
+                self._close_obj(obj)
+                del obj  
+                if self.count > 0:
+                    self.count -= 1               
 
 class KeyedObjectPool(ObjectPool):    
     """
@@ -107,11 +116,14 @@ class KeyedObjectPool(ObjectPool):
      
     def __put_obj(self, obj, key):
         self.__check(key)
-        if self.queue_map[key][0].qsize() < self.max_size:
+        if self.size(key) < self.max_size:
             self.queue_map[key][0].put(obj) 
         else:
             self._close_obj(obj) 
             del obj   
+
+    def size(self, key):
+        return self.queue_map[key][0].qsize()
 
     def clear(self):
         with self._lock:
@@ -134,12 +146,16 @@ class KeyedObjectPool(ObjectPool):
     
     def return_obj(self, obj, key):
         with self._lock:
-            self.__put_obj(obj, key) 
+            if self.size(key) <= self.max_active_size:
+                self.__put_obj(obj, key) 
+            else:
+                self.destroy_obj(obj, key)    
 
     def destroy_obj(self, obj, key):
         with self._lock:
-            self._close_obj(obj) 
-            del obj  
-            if self.queue_map[key][1] > 0:
-                self.queue_map[key][1] -= 1    
+            if obj:
+                self._close_obj(obj) 
+                del obj  
+                if self.queue_map[key][1] > 0:
+                    self.queue_map[key][1] -= 1    
                 

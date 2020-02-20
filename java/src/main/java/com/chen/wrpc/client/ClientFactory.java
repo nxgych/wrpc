@@ -23,7 +23,7 @@ import com.chen.wrpc.provider.ServerProvider;
  * @author shuai.chen
  * @created 2016年10月31日
  */
-public class ClientPoolFactory extends BaseKeyedPooledObjectFactory<String,TServiceClient> {  
+public class ClientFactory extends BaseKeyedPooledObjectFactory<String,TServiceClient> {  
 	
 	private Logger logger = LoggerFactory.getLogger(getClass());
     
@@ -51,7 +51,7 @@ public class ClientPoolFactory extends BaseKeyedPooledObjectFactory<String,TServ
 		}
 	};
 	
-    protected ClientPoolFactory(ServerProvider serverProvider, 
+    protected ClientFactory(ServerProvider serverProvider, 
     		 Map<String,TServiceClientFactory<TServiceClient>> clientFactoryMap) throws Exception {  
         this.serverProvider = serverProvider;  
         this.clientFactoryMap = clientFactoryMap;  

@@ -32,8 +32,10 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	
 	volatile private static ClientProxy instance = null;  
 
+	// 最大连接数
+	private Integer maxTotal = 8;
 	// 最大活跃连接数
-	private Integer maxActive = 8;
+	private Integer maxActive = 4;
 
 	//连接空闲时间 ms, default 3 min, -1:关闭空闲检测
 	private Integer idleTime = 180000;
@@ -62,18 +64,21 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	 */
 	@Deprecated
     public static ClientProxy getInstance() {  
-	if(instance != null){
-		//do nothing
-	}else{
-		synchronized (ClientProxy.class) {  
-		    if(instance == null){//二次检查  
-			instance = new ClientProxy();  
-		    }  
-		} 
-	}
+		if(instance != null){
+			//do nothing
+		}else{
+			synchronized (ClientProxy.class) {  
+			    if(instance == null){//二次检查  
+				instance = new ClientProxy();  
+			    }  
+			} 
+		}
 	    return instance;  
     } 
-		
+	public void setMaxTotal(Integer maxTotal) {
+		this.maxTotal = maxTotal;
+	}
+	
 	public void setMaxActive(Integer maxActive) {
 		this.maxActive = maxActive;
 	}
@@ -105,7 +110,7 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	 * @throws Exception
 	 */
 	public void loadClientProxy() throws Exception{
-        String[] interfaceNames = serverProvider.getServiceInterfaces();		        
+        String[] interfaceNames = serverProvider.getServices();		        
         Map<String,TServiceClientFactory<TServiceClient>> cfMap = new HashMap<String,TServiceClientFactory<TServiceClient>>();		
 		
         // 生成Client.Factory Map
@@ -145,8 +150,8 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	private void setClientPool(Map<String,TServiceClientFactory<TServiceClient>> cfMap) 
 			throws Exception{
         clientPool = new ClientPool();
-        clientPool.setClientPoolFactory(new ClientPoolFactory(serverProvider, cfMap));
-        clientPool.setPoolConfig(maxActive, idleTime);
+        clientPool.setClientFactory(new ClientFactory(serverProvider, cfMap));
+        clientPool.setPoolConfig(maxTotal, maxActive, idleTime);
         clientPool.setPool();		
 	}
 	

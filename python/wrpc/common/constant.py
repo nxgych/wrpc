@@ -7,7 +7,7 @@ Created on 2017年3月4日
 '''
 
 #默认端口
-PORT_DEFAULT = 8603
+PORT_DEFAULT = 3068
 #默认版本号
 VERSION_DEFAULT = "1.0.0"
 #默认权重

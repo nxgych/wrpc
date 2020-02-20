@@ -47,7 +47,7 @@ public class ServerIpResolveLocal implements ServerIpResolve {
                 }  
             }  
         } catch (SocketException e) {  
-    	    throw new WrpcException(e); 
+    	        throw new WrpcException(e); 
         }  
         return serverIp;  
     }  

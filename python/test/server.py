@@ -10,8 +10,8 @@ from wrpc.shortcut import create_server
 SERVER_CONFIG = {
     "zk_hosts":"127.0.0.1:2181",
     "zk_timeout":5,
-    "global_service":"com.wrpc.test",
-    "handlers":["test.MessageHandler"]
+    "global_service_name":"com.wrpc.test",
+    "service_processors":["test.MessageHandler"]
 }
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ class ZkClient(KazooClient):
     def __init__(self, hosts="127.0.0.1:2181", timeout=10, namespace="", **kwargs):
         '''
         @param hosts: zookeeper hosts 
-        @param timeout: timeout  
+        @param timeout: timeout  second
         @param namespace: chroot
         '''        
         if not util.check_hosts(hosts):

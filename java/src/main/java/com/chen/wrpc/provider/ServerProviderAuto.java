@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -38,13 +40,13 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 	private CountDownLatch countDownLatch= new CountDownLatch(1);
 	
 	// 服务注册name
-	private String globalService;
+	private String globalServiceName = "";
 	// 服务版本号
 	private String version = Constant.DEFAULT_VERSION;
     //zookeeper client
 	private CuratorFramework zkClient;
 	//service interfaces
-	private String[] serviceInterfaces;
+	private String[] services;
 	//loadbalance
 	private LoadBalance loadBalance;
 	
@@ -54,7 +56,7 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 
 	// 用来保存当前provider所接触过的地址记录
 	// 当zookeeper集群故障时,可以使用trace中地址,作为"备份"
-	private Set<String> trace = new HashSet<String>();
+	private Map<String, ServerNode> trace = new HashMap<String, ServerNode>();
 	
 	//服务地址容器
 	private final Set<ServerNode> container = new HashSet<ServerNode>();
@@ -63,8 +65,8 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 
 	public ServerProviderAuto(){}
 	
-	public void setGlobalService(String globalService) {
-		this.globalService = globalService;
+	public void setGlobalServiceName(String globalServiceName) {
+		this.globalServiceName = globalServiceName;
 	}
 
 	public void setVersion(String version) {
@@ -75,8 +77,8 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 		this.zkClient = zkClient;
 	}
 
-	public void setServiceInterfaces(String[] serviceInterfaces) {
-		this.serviceInterfaces = serviceInterfaces;
+	public void setServices(String[] services) {
+		this.services = services;
 	}
 
 	public void setLoadBalance(LoadBalance loadBalance){
@@ -92,13 +94,13 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 		this.clientPool = clientPool;
 	}
 
-	public String getGlobalService() {
-		return globalService;
+	public String getGlobalServiceName() {
+		return globalServiceName;
 	}
 	
 	@Override
-	public String[] getServiceInterfaces() {
-		return serviceInterfaces;
+	public String[] getServices() {
+		return services;
 	}
 
 	@Override
@@ -131,8 +133,10 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 	private String getParentPath(){
 		StringBuffer sb = new StringBuffer();
 		sb.append(Constant.ZK_SEPARATOR_DEFAULT);
-		sb.append(globalService);
-		sb.append(Constant.ZK_SEPARATOR_DEFAULT);
+		if(globalServiceName != ""){
+			sb.append(globalServiceName);
+			sb.append(Constant.ZK_SEPARATOR_DEFAULT);
+		}
 		sb.append(version);
 		return sb.toString();	
 	}
@@ -210,8 +214,10 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 						path = data.getPath();
 						path = path.substring(getParentPath().length()+1);
 						String address = new String(path.getBytes(), "utf-8");
-						current.add(new ServerNode(address));
-						trace.add(address);
+						
+						ServerNode serverNode = new ServerNode(address);
+						current.add(serverNode);
+						trace.put(address, serverNode);
 					}
 					synchronized (lock) {
 						container.clear();
@@ -238,8 +244,8 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 		if (container.isEmpty()) {
 		    if (!trace.isEmpty()) {
 				synchronized (lock) {
-					for (String address : trace) {
-						container.add(new ServerNode(address));
+					for (ServerNode node : trace.values()) {
+						container.add(node);
 					}
 					loadBalance.setNodes(container);
 				}

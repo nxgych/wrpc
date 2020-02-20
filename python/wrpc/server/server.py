@@ -32,7 +32,11 @@ class Server(object):
         self.__zk_client = zk_client
         self.__server_config = server_config
         
-        self.__register = Register(zk_client)
+        if self.__zk_client:
+            self.__register = Register(zk_client)
+        else:    
+            self.__register = None
+            
         self.__set_server(server_class, **kwargs)
 
     def __set_server(self, server_class, **kwargs):
@@ -47,7 +51,7 @@ class Server(object):
         #muti processor
         mprocessor = TMultiplexedProcessor.TMultiplexedProcessor()
         #register handlers 
-        for handler in self.__server_config.get_handlers():
+        for handler in self.__server_config.get_service_processors():
             #get handler super class
             bases = handler.__bases__
             if len(bases) <= 0:
@@ -67,7 +71,8 @@ class Server(object):
         return mprocessor    
     
     def _register_server(self):
-        self.__register.register_and_listen(self.__server_config)
+        if self.__register:
+            self.__register.register_and_listen(self.__server_config)
      
     def start(self):
         '''start server'''
@@ -85,20 +90,20 @@ class Server(object):
             
 class ServerConfig(object):
     
-    def __init__(self, global_service, handlers,
+    def __init__(self, global_service_name, service_processors,
                  port=constant.PORT_DEFAULT, version=constant.VERSION_DEFAULT,
                  weight=constant.WEIGHT_DEFAULT, ip=None):   
         """
         server config
-        @param global_service: global service name
-        @param handlers: handlers implemented ifaces
+        @param global_service_name: global service name
+        @param service_processors: handlers implemented ifaces
         @param port: server port default is 8603
         @param version: server version default is 1.0.0
         @param weight: server weight default is 1
         @param ip: ip address if you force config it instead of getting local ip 
         """  
-        self.__global_service = global_service
-        self.__handlers = handlers
+        self.__global_service_name = global_service_name
+        self.__service_processors = service_processors
         self.__port = port
         self.__version = version
         self.__weight = weight
@@ -109,8 +114,8 @@ class ServerConfig(object):
     def get_port(self):
         return self.__port    
     
-    def get_handlers(self):
-        return self.__handlers
+    def get_service_processors(self):
+        return self.__service_processors
     
     def get_ip(self):
         return self.__ip
@@ -129,12 +134,10 @@ class ServerConfig(object):
                                     )    
 
     def get_parent_path(self):
-        return "{0}{1}{2}{3}".format(                                    
-                                    constant.ZK_SEPARATOR_DEFAULT,
-                                    self.__global_service,
-                                    constant.ZK_SEPARATOR_DEFAULT,
-                                    self.__version                                     
-                                    ) 
+        zsd = constant.ZK_SEPARATOR_DEFAULT
+        if self.__global_service_name != "":
+            return "{0}{1}{2}{3}".format(zsd, self.__global_service_name, zsd, self.__version)
+        return "{0}{1}".format(zsd, self.__version)
                 
     def get_node_name(self):
         return "{0}:{1}:{2}".format(

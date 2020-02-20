@@ -5,7 +5,7 @@
     欢迎同行交流及指正，qq：815738968 ~
 
 ## Feature</br>
-    1、基于thrift，跨语言，目前支持java和python；
+    1、基于thrift，跨语言，目前支持java、python、go；
     2、高可用，利用zookeeper集群来管理服务；
     3、支持多service。
     

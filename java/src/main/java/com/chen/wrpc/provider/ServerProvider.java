@@ -12,7 +12,7 @@ import com.chen.wrpc.common.ServerNode;
 public interface ServerProvider {
 	
     //获取接口
-    String[] getServiceInterfaces();
+    String[] getServices();
   
     /** 
      * 获取所有服务端地址 

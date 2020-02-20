@@ -48,7 +48,7 @@ def get_class(clazz):
     return clazz
             
 def create_server(zk_hosts="", zk_timeout=8, namespace="", 
-                  global_service="com.wrpc.service", handlers=[], port=constant.PORT_DEFAULT, 
+                  global_service_name="", service_processors=[], port=constant.PORT_DEFAULT, 
                   version=constant.VERSION_DEFAULT, weight=constant.WEIGHT_DEFAULT, ip=None, 
                   server_class=ThriftProcessPoolServer, **kwargs):
     """
@@ -56,8 +56,8 @@ def create_server(zk_hosts="", zk_timeout=8, namespace="",
     @param zk_hosts: zookeeper hosts,'127.0.0.1:2181'
     @param zk_timeout: zookeeper connection timeout   
     @param namespace: zookeeper chroot  
-    @param global_service: global service name
-    @param handlers: handlers implemented respective interface
+    @param global_service_name: global service name
+    @param service_processors: handlers implemented respective interface
     @param port: server port default is 8603
     @param version: server version default is 1.0.0
     @param weight: server weight default is 1
@@ -75,18 +75,18 @@ def create_server(zk_hosts="", zk_timeout=8, namespace="",
     
     #handler instances
     _handlers = []
-    for handler in handlers:
+    for handler in service_processors:
         clazz = get_class(handler)
         _handlers.append(clazz)    
             
     zk_client = ZkClient.make(zk_hosts, zk_timeout, namespace) if zk_hosts else None
-    server_config = ServerConfig(global_service, _handlers, port, version, weight, ip)
+    server_config = ServerConfig(global_service_name, _handlers, port, version, weight, ip)
     return Server(zk_client, server_config, server_clazz, **kwargs)
 
 def create_client(zk_hosts="", zk_timeout=8, namespace="", 
                 provider_class=AutoProvider, server_address="", 
-                global_service="com.wrpc.service", version=constant.VERSION_DEFAULT, 
-                service_ifaces=[], load_balance=RoundRobinLoad, 
+                global_service_name="", version=constant.VERSION_DEFAULT, 
+                services=[], load_balance=RoundRobinLoad, 
                 client_class=ThriftClientFactory, retry=3, retry_interval=0.2, **kwargs):
     """
     create client
@@ -97,16 +97,17 @@ def create_client(zk_hosts="", zk_timeout=8, namespace="",
                            default is AutoProvider
     @param server_address: server adress as string 'ip:port:weight' if provider is FixedProvider
                            else ignore that
-    @param global_service: global service name
+    @param global_service_name: global service name
     @param version: server version default is 1.0.0
-    @param service_ifaces: service interfaces class
+    @param services: service interfaces class
     @param load_balance: load balance class, RoundRobinLoad or RandomLoad, 
                          default is RoundRobinLoad   
     @param client_class: child class of ClientFactory, default is ThriftClientFactory    
     @param retry: retry access times, default is 3     
     @param retry_interval: retry interval time, default 0.2s            
     @param kwargs: 
-        pool_max_size: client pool max size, default is 8    
+        pool_max_size: client pool max size, default is 8 
+        pool_max_active_size: client pool max active size, default is 4 
         pool_wait_timeout: client pool block time, default is None means forever          
     """
     #provider class
@@ -114,7 +115,7 @@ def create_client(zk_hosts="", zk_timeout=8, namespace="",
     
     #service ifaces
     ifaces = []
-    for iface in service_ifaces:
+    for iface in services:
         iface_class = get_class(iface)
         ifaces.append(iface_class)         
 
@@ -132,6 +133,6 @@ def create_client(zk_hosts="", zk_timeout=8, namespace="",
     #client class
     client_clazz = get_class(client_class)
                             
-    provider = provider_clazz(server_from, global_service, version, ifaces, load_balance_class)
+    provider = provider_clazz(server_from, global_service_name, version, ifaces, load_balance_class)
     return Client(provider, client_clazz, retry, retry_interval, **kwargs)    
     

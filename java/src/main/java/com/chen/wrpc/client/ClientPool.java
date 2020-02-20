@@ -25,7 +25,7 @@ public class ClientPool implements Closeable{
 	//pool config
 	private GenericKeyedObjectPoolConfig poolConfig;
 	//client pool factory
-	private ClientPoolFactory clientPoolFactory;
+	private ClientFactory clientFactory;
 	
 	public ClientPool(){}
 	
@@ -38,7 +38,7 @@ public class ClientPool implements Closeable{
 	}
 	
 	public void setPool(){
-		pool = new GenericKeyedObjectPool<String, TServiceClient>(clientPoolFactory, poolConfig);			
+		pool = new GenericKeyedObjectPool<String, TServiceClient>(clientFactory, poolConfig);			
 	}
 
 	public GenericKeyedObjectPoolConfig getPoolConfig() {
@@ -54,11 +54,10 @@ public class ClientPool implements Closeable{
 	 * @param maxActive 最大活跃数
 	 * @param idleTime 空闲时间
 	 */
-	public void setPoolConfig(Integer maxActive, Integer idleTime){
+	public void setPoolConfig(Integer maxTotal, Integer maxActive, Integer idleTime){
 		GenericKeyedObjectPoolConfig poolConfig = new GenericKeyedObjectPoolConfig();
-        poolConfig.setMaxTotal(maxActive);  
-        poolConfig.setMaxIdlePerKey(1);
-        poolConfig.setMinIdlePerKey(0);  
+        poolConfig.setMaxTotalPerKey(maxTotal);  
+        poolConfig.setMaxIdlePerKey(maxActive); 
         poolConfig.setMinEvictableIdleTimeMillis(idleTime); 
         poolConfig.setTimeBetweenEvictionRunsMillis(idleTime / 2L);	
         poolConfig.setTestOnBorrow(true);
@@ -67,12 +66,12 @@ public class ClientPool implements Closeable{
         this.poolConfig = poolConfig;
 	}
 	
-	public ClientPoolFactory getClientPoolFactory() {
-		return clientPoolFactory;
+	public ClientFactory getClientFactory() {
+		return clientFactory;
 	}
 
-	public void setClientPoolFactory(ClientPoolFactory clientPoolFactory) {
-		this.clientPoolFactory = clientPoolFactory;
+	public void setClientFactory(ClientFactory clientFactory) {
+		this.clientFactory = clientFactory;
 	}
 
 	public synchronized void clearPool(){

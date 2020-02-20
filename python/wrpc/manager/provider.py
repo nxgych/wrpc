@@ -29,7 +29,7 @@ class Provider(object):
         raise NotImplementedError
 
     @abstractmethod
-    def get_service_ifaces(self):
+    def get_services(self):
         raise NotImplementedError
     
     def listen(self):
@@ -45,14 +45,14 @@ class AutoProvider(Provider):
     
     __lock = threading.RLock()
     
-    def __init__(self, zk_client, global_service, version=constant.VERSION_DEFAULT,
-                 service_ifaces = [], load_balance = RoundRobinLoad):
+    def __init__(self, zk_client, global_service_name, version=constant.VERSION_DEFAULT,
+                 services = [], load_balance = RoundRobinLoad):
         """
         auto server provider listened by ChildrenWatch
         @param zkclient: zookeeper connection client
-        @param global_service: global service name
+        @param global_service_name: global service name
         @param version: server version default is 1.0.0
-        @param service_ifaces: service ifaces class
+        @param services: service ifaces class
         @param load_balance: load balance class, RoundRobinLoad or RandomLoad, 
                              default is RoundRobinLoad
         """
@@ -61,23 +61,20 @@ class AutoProvider(Provider):
         except SessionExpiredError:
             logger.warn("Zookeeper Client session timed out.")    
             
-        self.__global_service = global_service
+        self.__global_service_name = global_service_name
         self.__version = version   
-        self.__service_ifaces = service_ifaces
+        self.__services = services
         self.__load_balance = load_balance()
         
-        self.__all_nodes = set()
-        self.__live_nodes = set()
-        
+        self.__all_nodes = {}
+        self.__live_nodes = set()  
         self.client_pool = None
         
     def __get_parent_path(self):
-        return "{0}{1}{2}{3}".format(                                   
-                                    constant.ZK_SEPARATOR_DEFAULT,
-                                    self.__global_service,
-                                    constant.ZK_SEPARATOR_DEFAULT,
-                                    self.__version
-                                    )
+        zsd = constant.ZK_SEPARATOR_DEFAULT
+        if self.__global_service_name != "":
+            return "{0}{1}{2}{3}".format(zsd, self.__global_service_name, zsd, self.__version)
+        return "{0}{1}".format(zsd, self.__version)
     
     def listen(self):
         if self.__zk_client:
@@ -92,7 +89,7 @@ class AutoProvider(Provider):
                             
             for node in nodes:
                 server_node = ServerNode(node)
-                self.__all_nodes.add(server_node)
+                self.__all_nodes[node] = server_node
                 self.__live_nodes.add(server_node)  
                 
             self.__load_balance.set_nodes(self.__live_nodes)    
@@ -104,8 +101,8 @@ class AutoProvider(Provider):
     def select(self):
         return self.__load_balance.get_node()
     
-    def get_service_ifaces(self):
-        return self.__service_ifaces
+    def get_services(self):
+        return self.__services
     
     def set_client_pool(self, client_pool):
         self.client_pool = client_pool
@@ -116,13 +113,10 @@ class AutoProvider(Provider):
 
 class FixedProvider(Provider):
     
-    def __init__(self, server_address, global_service, version=constant.VERSION_DEFAULT,
-                 service_ifaces = [], load_balance = RoundRobinLoad):
+    def __init__(self, server_address, services = [], load_balance = RoundRobinLoad):
         """
         fixed server provider
         @param server_address: server adress  as string 'ip:port:weight' or 'ip:port'     
-        @param global_service: global service name
-        @param version: server version default is 1.0.0        
         @param service_ifaces: service ifaces class
         @param load_balance: load balance class, RoundRobinLoad or RandomLoad, 
                              default is RoundRobinLoad
@@ -130,21 +124,17 @@ class FixedProvider(Provider):
         if not util.check_hosts(server_address):
             raise WrpcException("Illegal server_address for FixedProvider.")        
              
-        self.__global_service = global_service
         self.__server_address = server_address
-        self.__service_ifaces = service_ifaces
+        self.__services = services
         self.__load_balance = load_balance()
 
-        self.__all_nodes = set()
         self.__live_nodes = set()
-        
         self.__set_nodes()
         
     def __set_nodes(self):
         nodes = self.__server_address.split(",")
         for node in nodes:
             server_node = ServerNode(node)
-            self.__all_nodes.add(server_node)
             self.__live_nodes.add(server_node)  
         
         self.__load_balance.set_nodes(self.__live_nodes)       
@@ -152,6 +142,6 @@ class FixedProvider(Provider):
     def select(self):
         return self.__load_balance.get_node()
     
-    def get_service_ifaces(self):
-        return self.__service_ifaces
+    def get_services(self):
+        return self.__services
             

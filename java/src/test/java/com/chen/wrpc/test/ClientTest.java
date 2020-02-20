@@ -29,8 +29,8 @@ public class ClientTest {
 		 //server provider
 		 ServerProviderAuto serverProvider = new ServerProviderAuto();
 		 serverProvider.setZkClient(zkClient.getObject());
-		 serverProvider.setGlobalService("com.wrpc.test");
-		 serverProvider.setServiceInterfaces(new String[]{"com.chen.wrpc.test.gen.MessageService"});
+		 serverProvider.setGlobalServiceName("com.wrpc.test");
+		 serverProvider.setServices(new String[]{"com.chen.wrpc.test.gen.MessageService"});
 		 serverProvider.afterPropertiesSet();
 		 
 		 //客户端

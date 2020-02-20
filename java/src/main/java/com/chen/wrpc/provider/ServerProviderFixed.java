@@ -17,12 +17,10 @@ import com.chen.wrpc.loadbalance.LoadBalanceRoundRobin;
  */
 public class ServerProviderFixed implements ServerProvider,InitializingBean{
 	
-	// 注册服务name
-	private String globalService;
 	// ip:port:weight
 	private String serverAddress;
 	//service interfaces
-	private String[] serviceInterfaces;
+	private String[] services;
 	//load balance
 	private LoadBalance loadBalance;
 	
@@ -44,14 +42,6 @@ public class ServerProviderFixed implements ServerProvider,InitializingBean{
 	@Override
 	public void close() {
 	}
-	
-	public String getGlobalService() {
-		return globalService;
-	}
-
-	public void setGlobalService(String globalService) {
-		this.globalService = globalService;
-	}
 
 	public String getServerAddress() {
 		return serverAddress;
@@ -62,13 +52,13 @@ public class ServerProviderFixed implements ServerProvider,InitializingBean{
 	}
 
 	@Override
-	public String[] getServiceInterfaces() {
+	public String[] getServices() {
 		// TODO Auto-generated method stub
-		return serviceInterfaces;
+		return services;
 	}
 	
-	public void setServiceInterfaces(String[] serviceInterfaces) {
-		this.serviceInterfaces = serviceInterfaces;
+	public void setServices(String[] services) {
+		this.services = services;
 	}
 	
 	public void setLoadBalance(LoadBalance loadBalance){
