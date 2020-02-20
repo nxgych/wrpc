@@ -12,8 +12,6 @@ import socket
 import struct
 import fcntl
 
-from wrpc.common import UncheckedException
-
 def singleton(cls):  
     """
     singleton decorator
@@ -23,15 +21,7 @@ def singleton(cls):
         if cls not in _instances:  
             _instances[cls] = cls(*args, **kwargs)  
         return _instances[cls]  
-    return _singleton  
-
-def unchecked(cls):
-    """
-    decorator for class which is unchecked and can't be used at present
-    """
-    def _deco(*args, **kwargs):
-        raise UncheckedException(cls.__name__)
-    return _deco
+    return _singleton
 
 def get_clazz_string(clazz):   
     '''

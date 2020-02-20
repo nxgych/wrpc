@@ -16,11 +16,6 @@ from thrift.protocol import TCompactProtocol
 from thrift.server import TProcessPoolServer,TNonblockingServer
 from thrift.transport import TSocket, TTransport
 
-from thrift import TTornado
-from tornado import ioloop
-
-from wrpc.common.util import unchecked
-
 class ServerFactory(object):
     """abstract class of server factory"""
     __metaclass__ = ABCMeta
@@ -205,28 +200,3 @@ class GeventProcessPoolServer(ServerFactory):
     def stop(self):
         if self._server:
             self._server.stop()   
-
-@unchecked                    
-class TornadoProcessPoolServer(ServerFactory):
-    """warning: tornado server暂时不能使用"""
-    
-    def __init__(self, processor, ip, port, **kwargs):
-        self._server = self.__create_server(processor, ip, port)
-        self._process_num = kwargs.get("process_num", 0)
-  
-    @staticmethod
-    def __create_server(processor, ip, port):
-        pfactory = TCompactProtocol.TCompactProtocolFactory()
-        server = TTornado.TTornadoServer(processor, pfactory)
-        server.bind(port)
-        return server
-        
-    def start(self):   
-        if self._server:
-            self._server.start(self._process_num)
-            ioloop.IOLoop.instance().start()
-        
-    def stop(self):
-        if self._server:
-            self._server.stop()
-                        
