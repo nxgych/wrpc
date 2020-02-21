@@ -8,6 +8,7 @@ import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.chen.wrpc.common.WrpcException;
 import com.chen.wrpc.ip.ServerIpResolve;
 import com.chen.wrpc.server.ServerConfig;
 
@@ -89,9 +90,8 @@ public class ServerRegisterListener implements ConnectionStateListener{
             } catch (InterruptedException e) {  
             		logger.error("Register listener interrupted."); 
                 break;  
-            } catch (Exception e){  
-	            	logger.error("Register listener error.");  
-	            	break;
+            } catch (Exception e){ 
+              	throw new WrpcException(e);
             }  
         }  
     } 

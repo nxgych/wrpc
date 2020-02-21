@@ -23,7 +23,7 @@ public class ClientPool implements Closeable{
 	//client pool
 	private GenericKeyedObjectPool<String, TServiceClient> pool;
 	//pool config
-	private GenericKeyedObjectPoolConfig poolConfig;
+	private GenericKeyedObjectPoolConfig<TServiceClient> poolConfig;
 	//client pool factory
 	private ClientFactory clientFactory;
 	
@@ -41,11 +41,11 @@ public class ClientPool implements Closeable{
 		pool = new GenericKeyedObjectPool<String, TServiceClient>(clientFactory, poolConfig);			
 	}
 
-	public GenericKeyedObjectPoolConfig getPoolConfig() {
+	public GenericKeyedObjectPoolConfig<TServiceClient> getPoolConfig() {
 		return poolConfig;
 	}
 
-	public void setPoolConfig(GenericKeyedObjectPoolConfig poolConfig) {
+	public void setPoolConfig(GenericKeyedObjectPoolConfig<TServiceClient> poolConfig) {
 		this.poolConfig = poolConfig;
 	}
 
@@ -55,7 +55,7 @@ public class ClientPool implements Closeable{
 	 * @param idleTime 空闲时间
 	 */
 	public void setPoolConfig(Integer maxTotal, Integer maxActive, Integer idleTime){
-		GenericKeyedObjectPoolConfig poolConfig = new GenericKeyedObjectPoolConfig();
+		GenericKeyedObjectPoolConfig<TServiceClient> poolConfig = new GenericKeyedObjectPoolConfig<TServiceClient>();
         poolConfig.setMaxTotalPerKey(maxTotal);  
         poolConfig.setMaxIdlePerKey(maxActive); 
         poolConfig.setMinEvictableIdleTimeMillis(idleTime); 
