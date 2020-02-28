@@ -31,10 +31,10 @@ def gen_code(lan, model):
 if __name__ == "__main__":
     """
     generate appointed languages and appointed models
-        command 'python gen.py java,python user,message'
+        command 'python gen.py java,python,go user,message'
     generate appointed languages and all models
-        command 'python gen.py java,python'
-    generate default languages both java and python and all models without arguments
+        command 'python gen.py java,python,go'
+    generate default languages and all models without arguments
         command 'python gen.py'    
     """
     args = sys.argv
