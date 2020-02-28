@@ -8,6 +8,9 @@
     1、基于thrift，跨语言，目前支持java、python、go；
     2、高可用，利用zookeeper集群来管理服务；
     3、支持多service。
-    
+
+## Installation</br>
+    go get -u github.com/nxgych/wrpc/go/wrpc
+     
 ## Tutorial</br>
     参考test模块。   
