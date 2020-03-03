@@ -49,11 +49,12 @@ class ObjectPool(object):
                 pass         
     
     def __put_obj(self, obj):
-        if self.size() < self.max_size:
-            self.queue.put(obj) 
-        else:
-            self._close_obj(obj)
-            del obj  
+        with self._lock:
+            if self.size() < self.max_size:
+                self.queue.put(obj) 
+            else:
+                self._close_obj(obj)
+                del obj  
             
     def size(self):
         return self.queue.qsize()        
@@ -74,11 +75,10 @@ class ObjectPool(object):
             return self.queue.get(True, self.wait_timeout) 
     
     def return_obj(self, obj):
-        with self._lock:
-            if self.size() <= self.max_active_size:
-                self.__put_obj(obj)    
-            else:
-                self.destroy_obj(obj)    
+        if self.size() <= self.max_active_size:
+            self.__put_obj(obj)    
+        else:
+            self.destroy_obj(obj)    
             
     def destroy_obj(self, obj):
         with self._lock:
@@ -115,12 +115,13 @@ class KeyedObjectPool(ObjectPool):
             self.queue_map[key] = [Queue(self.max_size), 0]
      
     def __put_obj(self, obj, key):
-        self.__check(key)
-        if self.size(key) < self.max_size:
-            self.queue_map[key][0].put(obj) 
-        else:
-            self._close_obj(obj) 
-            del obj   
+        with self._lock:
+            self.__check(key)
+            if self.size(key) < self.max_size:
+                self.queue_map[key][0].put(obj) 
+            else:
+                self._close_obj(obj) 
+                del obj   
 
     def size(self, key):
         return self.queue_map[key][0].qsize()
@@ -145,11 +146,10 @@ class KeyedObjectPool(ObjectPool):
             return self.queue_map[key][0].get(True, self.wait_timeout) 
     
     def return_obj(self, obj, key):
-        with self._lock:
-            if self.size(key) <= self.max_active_size:
-                self.__put_obj(obj, key) 
-            else:
-                self.destroy_obj(obj, key)    
+        if self.size(key) <= self.max_active_size:
+            self.__put_obj(obj, key) 
+        else:
+            self.destroy_obj(obj, key)    
 
     def destroy_obj(self, obj, key):
         with self._lock:

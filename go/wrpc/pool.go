@@ -112,13 +112,11 @@ func (p *Pool) Borrow() (*list.Element, error){
 }
 
 func (p *Pool) Return(obj *list.Element){
-	p.mutex.Lock()  //加锁
 	if p.Size() <= p.maxActiveSize{
 	    p.putObj(obj)
 	}else{
 		p.Destroy(obj)
 	}
-	p.mutex.Unlock() //解锁
 }
 
 func (p *Pool) Destroy(obj *list.Element){
@@ -141,11 +139,13 @@ func (p *Pool) getObj() (interface{}, error){
 }
 
 func (p *Pool) putObj(obj *list.Element){
+	p.mutex.Lock()  //加锁
 	if p.Size() < p.maxSize {
 		p.pb.List.PushBack(obj)
 	}else{
 		closeObj(obj)
 	}
+	p.mutex.Unlock() //解锁	
 }
 
 //keyedPool struct
@@ -218,13 +218,11 @@ func (p *KeyedPool) Borrow(key string) (*list.Element, error){
 }
 
 func (p *KeyedPool) Return(obj *list.Element, key string){
-	p.mutex.Lock()  //加锁
 	if p.Size(key) <= p.maxActiveSize{
 	    p.putObj(obj, key)
 	}else{
 		p.Destroy(obj, key)
 	}
-	p.mutex.Unlock() //解锁
 }
 
 func (p *KeyedPool) Destroy(obj *list.Element, key string){
@@ -254,12 +252,14 @@ func (p *KeyedPool) getObj() (interface{}, error){
 }
 
 func (p *KeyedPool) putObj(obj *list.Element, key string){
+	p.mutex.Lock()  //加锁
 	p.check(key)
 	if p.Size(key) < p.maxSize {
 		p.pb[key].List.PushBack(obj)
 	}else{
 		closeObj(obj)
 	}
+	p.mutex.Unlock() //解锁
 }
 
 // 关闭对象
