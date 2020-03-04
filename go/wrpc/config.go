@@ -47,9 +47,6 @@ func NewServerConfig(globalServiceName string, serviceProcessors []thrift.TProce
 	if version == ""{
 		conf.version = VERSION_DEFAULT
 	}
-	if ip == ""{
-		conf.ip = GetLocalIp()
-	}
 	if port <= 0{
 		conf.port = PORT_DEFAULT
 	}
@@ -64,7 +61,10 @@ func (conf *ServerConfig) GetServiceProcessors() []thrift.TProcessor{
 }        
 
 func (conf *ServerConfig) GetIp() string {
-	return conf.ip
+	if conf.ip != ""{
+		return conf.ip
+	}
+	return GetLocalIp()
 }
 
 func (conf *ServerConfig) GetPort() int {
@@ -97,7 +97,7 @@ func (conf *ServerConfig) GetPath() string{
 */
 func (conf *ServerConfig) GetNodeName() string{
 	var b bytes.Buffer
-    b.WriteString(conf.ip)
+    b.WriteString(conf.GetIp())
     b.WriteString(":")
     port := strconv.Itoa(conf.port)
     b.WriteString(port)
