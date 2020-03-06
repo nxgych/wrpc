@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"context"
     "github.com/apache/thrift/lib/go/thrift"
-    "wrpc"
+    "github.com/nxgych/wrpc/go/wrpc"
     tm "test/message"  
 )
 

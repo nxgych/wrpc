@@ -58,7 +58,11 @@ func NewServerConfig(globalServiceName string, serviceProcessors []thrift.TProce
 	           
 func (conf *ServerConfig) GetServiceProcessors() []thrift.TProcessor{
 	return conf.serviceProcessors
-}        
+}      
+
+func (conf *ServerConfig) SetVersion(version string){
+	conf.version = version
+}  
 
 func (conf *ServerConfig) GetIp() string {
 	if conf.ip != ""{
@@ -67,9 +71,22 @@ func (conf *ServerConfig) GetIp() string {
 	return GetLocalIp()
 }
 
+func (conf *ServerConfig) SetIp(ip string){
+	conf.ip = ip
+}
+
 func (conf *ServerConfig) GetPort() int {
 	return conf.port
-}	           
+}	 
+
+func (conf *ServerConfig) SetPort(port int){
+	conf.port = port
+}
+
+func (conf *ServerConfig) SetWeight(weight int){
+	conf.weight = weight
+}
+          
 /*
 获取 zk 注册地址父级目录
 */

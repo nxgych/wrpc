@@ -16,6 +16,9 @@ import (
     "github.com/apache/thrift/lib/go/thrift"
 )
 
+const RETRY int = 3
+const RETRY_INTERVAL = 200 //ms
+
 type ClientFuncType func(param *thrift.TStandardClient) interface{}
 
 type Service interface{
@@ -99,16 +102,42 @@ func (c *ClientFactory) Create(key ...string) (interface{}, error){
     }
     
     transport := thrift.NewTFramedTransport(socket)
-    protocol := thrift.NewTCompactProtocol(transport)
+    clientWrap, err := NewClientWrap(transport, c.clientMap[key[0]], key[0])
+    return clientWrap, err
+}
+
+/*
+客户端包装类
+*/
+type ClientWrap struct {
+	transport thrift.TTransport
+	client interface{}
+}
+
+func NewClientWrap(transport thrift.TTransport, clientFunc ClientFuncType, key string)(interface{}, error){
+	clientWrap := &ClientWrap{transport:transport}
     // 打开Transport，与服务器进行连接
-    if err := transport.Open(); err != nil {
+    if err := clientWrap.transport.Open(); err != nil {
         return nil, err
     }
     
-    mProtocol := thrift.NewTMultiplexedProtocol(protocol, key[0])
+    protocol := thrift.NewTCompactProtocol(clientWrap.transport)
+    mProtocol := thrift.NewTMultiplexedProtocol(protocol, key)
+    
     cli := thrift.NewTStandardClient(mProtocol, mProtocol)
-    client := c.clientMap[key[0]](cli)
-    return client, nil
+    clientWrap.client = clientFunc(cli)
+    
+    log.Println("Client created.") 
+    return clientWrap, nil
+}
+
+func (cw *ClientWrap) Get() interface{}{
+	return cw.client
+}
+
+func (cw *ClientWrap) Close() error{
+	log.Println("Client closed.") 
+	return cw.transport.Close()
 }
 
 // client pool
@@ -146,8 +175,8 @@ type ClientProxy struct {
 func NewClientProxy(serviceName string, pool *ClientPool, retry int, retryInterval int) *ClientProxy{
 	clientProxy := ClientProxy{serviceName:serviceName, pool:pool, 
 		                       retry:retry, retryInterval:retryInterval}
-	if retry <= 0{ clientProxy.retry = 3 }
-	if retryInterval <= 0{ clientProxy.retryInterval = 200 }
+	if retry <= 0{ clientProxy.retry = RETRY }
+	if retryInterval <= 0{ clientProxy.retryInterval = RETRY_INTERVAL }
 	return &clientProxy
 }
 
@@ -162,10 +191,13 @@ func (cp *ClientProxy) Call(method string, args... interface{}) (interface{}, er
 	var err error
 	
 	for i := 0; i < cp.retry; i++{
+		//borrow object
 		obj, errBorrow := cp.pool.GetPool().Borrow(key)
 		
 		if obj != nil{
-		    ref := reflect.ValueOf(obj.Value)
+			var clientWrap *ClientWrap = obj.(*ClientWrap)
+			
+		    ref := reflect.ValueOf(clientWrap.Get())
 		    f := ref.MethodByName(method)
 		    if (f.IsValid()) {
 		       	vals := make([]reflect.Value, 0, len(args))
