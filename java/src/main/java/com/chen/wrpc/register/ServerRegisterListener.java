@@ -54,37 +54,38 @@ public class ServerRegisterListener implements ConnectionStateListener{
 	    	//recreated any situation
         while(true){  
             try {  
-            	synchronized(this){
+            		synchronized(this){
 	                if(zkClient.getZookeeperClient().blockUntilConnectedOrTimedOut()){  
-	            		String path = "";
-	            		if(serverConfig.getIp() != null){
-	            			path = serverConfig.getPath();
-	            		}else{	
-	            			String oldPath = serverConfig.getPath();
-	            			//reset server ip
-	            			if(serverIpResolve != null)serverIpResolve.reset();
-	            			path = serverConfig.getPath();
-	            			//delete old path if ip changed
-	            			if(!oldPath.equals(path)){
-	                			if(zkClient.checkExists().forPath(oldPath) != null){
-	                				zkClient.delete()
-	                				.guaranteed()
-	                				.deletingChildrenIfNeeded()
-	                				.forPath(oldPath);
-	                				logger.info("delete old path:" + oldPath);
-	                			}
-	            			}
-	            		}
-	            		
-	            		logger.info("prelook register path:" + path);
-	            		//create path
-                		if(zkClient.checkExists().forPath(path) == null){
-	                    	zkClient.create()
-	                        .creatingParentsIfNeeded()
-	                        .withMode(CreateMode.EPHEMERAL)
-	                        .forPath(path);  
-                		}
-	            	}
+		            		String path = "";
+		            		if(serverConfig.getIp() != null){
+		            			path = serverConfig.getPath();
+		            		}else{	
+		            			String oldPath = serverConfig.getPath();
+		            			//reset server ip
+		            			if(serverIpResolve != null)serverIpResolve.reset();
+		            			path = serverConfig.getPath();
+		            			//delete old path if local ip changed
+		            			if(!oldPath.equals(path)){
+		                			if(zkClient.checkExists().forPath(oldPath) != null){
+		                				zkClient.delete()
+		                				.guaranteed()
+		                				.deletingChildrenIfNeeded()
+		                				.forPath(oldPath);
+		                				logger.info("delete old path:" + oldPath);
+		                			}
+		            			}
+		            		}
+		            		
+		            		logger.info("prelook register path:" + path);
+		            		//create path
+	                		if(zkClient.checkExists().forPath(path) == null){
+		                    	zkClient.create()
+		                        .creatingParentsIfNeeded()
+		                        .withMode(CreateMode.EPHEMERAL)
+		                        .forPath(path);  
+		                    	logger.info("registe server success.");
+	                		}
+		            	}
                 }
                 break;   
             } catch (InterruptedException e) {  

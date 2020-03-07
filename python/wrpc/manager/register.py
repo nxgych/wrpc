@@ -45,6 +45,7 @@ class Register(object):
                 logger.info("prelook register path: %s" % path);
                 if not self.__zk_client.exists(path):
                     self.__zk_client.create(path, ephemeral=True)   
+                    logger.info("registe server success.");
             except SessionExpiredError:
                 logger.warn("Zookeeper Client session timed out.") 
             except Exception:

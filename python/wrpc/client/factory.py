@@ -56,6 +56,7 @@ class ThriftClientFactory(ClientFactory):
              
         #add close function
         instance.close = partial(close, instance)    
+        
         logger.info("Client created.") 
         return instance
 

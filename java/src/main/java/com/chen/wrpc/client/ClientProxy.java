@@ -74,7 +74,8 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 			} 
 		}
 	    return instance;  
-    } 
+    }
+	
 	public void setMaxTotal(Integer maxTotal) {
 		this.maxTotal = maxTotal;
 	}

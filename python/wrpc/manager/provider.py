@@ -86,13 +86,14 @@ class AutoProvider(Provider):
             
             if len(nodes) <= 0:
                 logger.warn("server not found!") 
-                            
-            for node in nodes:
-                server_node = ServerNode(node)
-                self.__all_nodes[node] = server_node
-                self.__live_nodes.add(server_node)  
+            else:                
+                for node in nodes:
+                    server_node = ServerNode(node)
+                    self.__all_nodes[node] = server_node
+                    self.__live_nodes.add(server_node)  
                 
             self.__load_balance.set_nodes(self.__live_nodes)    
+                
             if self.client_pool is not None:
                 self.client_pool.clear_pool()    
             
@@ -108,6 +109,8 @@ class AutoProvider(Provider):
         self.client_pool = client_pool
         
     def close(self):
+        if self.client_pool:
+            self.client_pool.clear_pool()
         if self.__zk_client:
             self.__zk_client.close()
 

@@ -13,6 +13,7 @@ type ServerConfig struct {
 	ip string
 	port int
 	weight int
+	localIp string
 }
 
 /*
@@ -43,6 +44,7 @@ func NewServerConfig(globalServiceName string, serviceProcessors []thrift.TProce
 	conf.ip = ip
 	conf.port = port
 	conf.weight = weight
+	conf.localIp = GetLocalIp()
 	
 	if version == ""{
 		conf.version = VERSION_DEFAULT
@@ -64,15 +66,23 @@ func (conf *ServerConfig) SetVersion(version string){
 	conf.version = version
 }  
 
-func (conf *ServerConfig) GetIp() string {
+func (conf *ServerConfig) GetIp() string{
+	return conf.ip
+}
+
+func (conf *ServerConfig) GetServerIp() string {
 	if conf.ip != ""{
 		return conf.ip
 	}
-	return GetLocalIp()
+	return conf.localIp
 }
 
 func (conf *ServerConfig) SetIp(ip string){
 	conf.ip = ip
+}
+
+func (conf *ServerConfig) SetLocalIp(){
+	conf.localIp = GetLocalIp()
 }
 
 func (conf *ServerConfig) GetPort() int {
@@ -114,7 +124,7 @@ func (conf *ServerConfig) GetPath() string{
 */
 func (conf *ServerConfig) GetNodeName() string{
 	var b bytes.Buffer
-    b.WriteString(conf.GetIp())
+    b.WriteString(conf.GetServerIp())
     b.WriteString(":")
     port := strconv.Itoa(conf.port)
     b.WriteString(port)

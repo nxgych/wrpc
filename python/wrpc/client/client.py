@@ -60,6 +60,10 @@ class Client(object):
         self.__provider.set_client_pool(self.__client_pool)
         self.__provider.listen()
         time.sleep(1)
+        
+    def close(self):
+        if self.__provider:
+            self.__provider.close()   
 
     def get_client(self, skey):
         """

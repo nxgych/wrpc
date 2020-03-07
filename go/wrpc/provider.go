@@ -18,6 +18,7 @@ type Provider interface {
 	SetClientPool(pool *ClientPool)
 	SetNodes()
 	Select() (*Node, error)
+	Close()
 }
 
 type BaseProvider struct {
@@ -106,12 +107,12 @@ func (ap *AutoProvider) SetNodes(){
 	    ap.liveNodes = (ap.liveNodes)[0:0]
 	    if len(nodes) <= 0{
 	    	    log.Println("server not found!")
-	    }
-	    
-	    for _, nodeStr := range nodes{
-	        serverNode := ServerNode(nodeStr)
-	        ap.allNodes[nodeStr] = serverNode
-	        ap.liveNodes = append(ap.liveNodes, serverNode)
+	    }else{
+		    for _, nodeStr := range nodes{
+		        serverNode := ServerNode(nodeStr)
+		        ap.allNodes[nodeStr] = serverNode
+		        ap.liveNodes = append(ap.liveNodes, serverNode)
+		    }
 	    }
 	    ap.loadBalance.SetNodes(ap.liveNodes) 
 	    ap.clientPool.ClearPool() 
@@ -126,15 +127,24 @@ func (ap *AutoProvider) watch(child_ch <-chan zk.Event){
     for{
 	    select {
 	    	case e := <-child_ch:
-	    	    if e.Type == zk.EventNodeChildrenChanged {
-				ap.SetNodes() 			    	
-				log.Println("Child node changed.") 
-	    	    }else if e.Type == zk.EventNodeCreated{
-				ap.SetNodes() 			    	
-				log.Println("Child node created.") 
-	    	    }else if e.Type == zk.EventNodeDeleted{
-				ap.SetNodes() 			    	
-				log.Println("Child node deleted.") 
+	    	    switch e.Type{
+	    	        case zk.EventNodeChildrenChanged:		    	
+					log.Println("Child node changed.") 
+					ap.SetNodes() 
+		    	    case zk.EventNodeCreated:		    	
+					log.Println("Child node created.") 
+					ap.SetNodes() 
+	    	        case zk.EventNodeDeleted:		    	
+					log.Println("Child node deleted.") 
+					ap.SetNodes()
+				case zk.EventSession:
+					log.Println("EventSession.") 
+					ap.SetNodes()
+				case zk.EventNotWatching:
+					log.Println("EventNotWatching.") 
+					ap.SetNodes()
+				default:
+				    //nothing	
 	    	    }
 	    }
     }	
@@ -147,6 +157,15 @@ func (ap *AutoProvider) SetClientPool(pool *ClientPool){
 func (ap *AutoProvider) Select() (*Node, error){
 	node, err := ap.loadBalance.GetNode()
 	return node, err
+}
+
+func (ap *AutoProvider) Close(){
+	if ap.clientPool != nil{
+		ap.clientPool.ClearPool()
+	}
+	if ap.zkc != nil{
+		ap.zkc.Close()
+	}
 }
 
 /**
@@ -191,3 +210,6 @@ func (fp *FixedProvider) Select() (*Node, error){
 	return node, err
 }
 
+func (fp *FixedProvider) Close(){
+
+}

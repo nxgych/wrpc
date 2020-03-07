@@ -17,7 +17,7 @@ import (
 )
 
 const RETRY int = 3
-const RETRY_INTERVAL = 200 //ms
+const RETRY_INTERVAL int = 200 //ms
 
 type ClientFuncType func(param *thrift.TStandardClient) interface{}
 
@@ -28,6 +28,7 @@ type Service interface{
 
 //client
 type Client struct {
+	provider Provider
 	proxyMap map[string]*ClientProxy
 }
 
@@ -69,8 +70,14 @@ func NewClient(provider Provider, retry int, retryInterval int,
 	provider.SetNodes()
 	time.Sleep(1*time.Second)
 	
-	return &Client{proxyMap:proxyMap}
+	return &Client{provider:provider, proxyMap:proxyMap}
 }
+	           
+func (c *Client) Close(){
+	if c.provider != nil{
+		c.provider.Close()
+	}
+}	           
 
 func (c *Client) GetClient(key string) *ClientProxy{
 	return c.proxyMap[key]

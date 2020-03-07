@@ -110,11 +110,13 @@ public class Server implements InitializingBean,Closeable{
 		// TODO Auto-generated method stub
 	    this.setServerThread();  
 	    this.setServerRegister();
-	    this.register();
 	}  
 
     public void start() {  
-    		serverThread.start();
+      	register();
+	    	if(serverThread != null){
+	    		serverThread.start();  
+	    	}
     }
 
     public void close() {  

@@ -148,10 +148,10 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 	 * @param cacheData
 	 * @throws Exception
 	 */
-	private void buildPathChildrenCache(final CuratorFramework client, String path, Boolean cacheData) 
-			throws Exception {
+	private void buildPathChildrenCache(final CuratorFramework client, String path, Boolean cacheData) throws Exception {
 		try{
 			cachedPath = new PathChildrenCache(client, path, cacheData);
+			
 			cachedPath.getListenable().addListener(new PathChildrenCacheListener() {
 				
 				@Override
@@ -183,7 +183,7 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 						default:
 							// do nothing
 					}
-					// 任何节点的时机数据变动,都会rebuild,此处为一个"简单的"做法.
+					// 任何节点数据变动,都会rebuild,此处为一个"简单的"做法.
 					try{
 						if(client.getZookeeperClient().blockUntilConnectedOrTimedOut()){
 							cachedPath.rebuild();
@@ -199,15 +199,11 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 				protected void rebuild() throws Exception {
 					List<ChildData> children = cachedPath.getCurrentData();
 					if (children == null || children.isEmpty()) {
-						/**
-						* 有可能所有的thrift server都与zookeeper断开了链接
-					    * 但是,有可能,thrift client与thrift server之间的网络是良好的
-						* 因此此处是否需要清空container,是需要多方面考虑的.
-						*/
 						container.clear();
 						logger.error("Server not found!");
 						return;
 					}
+					
 					Set<ServerNode> current = new HashSet<ServerNode>();
 					String path = null;
 					for (ChildData data : children) {
@@ -219,6 +215,7 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 						current.add(serverNode);
 						trace.put(address, serverNode);
 					}
+					
 					synchronized (lock) {
 						container.clear();
 						container.addAll(current);
@@ -264,7 +261,7 @@ public class ServerProviderAuto implements ServerProvider, InitializingBean ,Clo
 				zkClient.close();
 			}
         } catch (Exception e) {
-        	throw new WrpcException(e);
+        		throw new WrpcException(e);
         }
 	}
 	

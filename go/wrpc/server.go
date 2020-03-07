@@ -25,7 +25,7 @@ create server
 */
 func NewServer(zkc *ZkClient, conf *ServerConfig) *Server{	
 	mprocessor := GetProcessor(conf.GetServiceProcessors())
-	serverObj := ServerFactory(mprocessor, conf.GetIp(), conf.GetPort())
+	serverObj := ServerFactory(mprocessor, conf.GetServerIp(), conf.GetPort())
 	return &Server{zkc:zkc, conf:conf, serverObj:serverObj}
 }
 
@@ -48,11 +48,11 @@ func (ser *Server) Start(){
 stop server
 */
 func (ser *Server) Stop(){
-	if ser.zkc != nil {
-		ser.zkc.Close()
-	}
 	if ser.serverObj != nil{
 		ser.serverObj.Stop()
+	}
+	if ser.zkc != nil {
+		ser.zkc.Close()
 	}
 }
 

@@ -13,6 +13,7 @@ import(
     "github.com/samuel/go-zookeeper/zk"
 )
 
+const ZK_TIMEOUT int = 10000 //ms
 
 type ZkClient struct {
 	address []string
@@ -38,8 +39,8 @@ zookeeper client
 @namespace：命名空间，一般为空
 */
 func NewZkClient(address []string, timeout int, namespace string) *ZkClient{
-	to := 10000;if timeout > 0 { to = timeout }
-	zkc := &ZkClient{address:address, timeout:to, namespace:namespace}
+	zkTimeout := ZK_TIMEOUT;if timeout > 0 { zkTimeout = timeout }
+	zkc := &ZkClient{address:address, timeout:zkTimeout, namespace:namespace}
 	zkc.Connect()
 	return zkc
 }
@@ -63,17 +64,18 @@ func (z *ZkClient) Connect(){
 }
 
 func callback(event zk.Event) {
-    if event.State == zk.StateConnected{
-    	    log.Println("Connection is connected.")
-    }else if event.State == zk.StateDisconnected{
-        log.Println("Connection is disconnected.")
-    }else if event.State == zk.StateExpired{
-        log.Println("Connection session is expired.")
-    }else if event.State == zk.StateConnecting{
-        log.Println("Connection is connecting.")
-    }else{
-        log.Println("Connection is unknown.")
-    }
+	switch event.State{
+		case zk.StateConnected:
+		    log.Println("Connection is connected.")
+		case zk.StateDisconnected:
+		    log.Println("Connection is disconnected.")
+		case zk.StateExpired:
+			log.Println("Connection session is expired.")
+		case zk.StateConnecting:
+			log.Println("Connection is connecting.")
+		default:
+			log.Println("Connection is unknown.")		    
+	}
 }
 
 func (z *ZkClient) GetAbsolutePath(path string) string{

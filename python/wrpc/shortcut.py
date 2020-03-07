@@ -47,7 +47,7 @@ def get_class(clazz):
         return getattr(module, split[-1]) if hasattr(module, split[-1]) else module  
     return clazz
             
-def create_server(zk_hosts="", zk_timeout=8, namespace="", 
+def create_server(zk_hosts="", zk_timeout=10, namespace="", 
                   global_service_name="", service_processors=[], port=constant.PORT_DEFAULT, 
                   version=constant.VERSION_DEFAULT, weight=constant.WEIGHT_DEFAULT, ip=None, 
                   server_class=ThriftProcessPoolServer, **kwargs):
@@ -83,7 +83,7 @@ def create_server(zk_hosts="", zk_timeout=8, namespace="",
     server_config = ServerConfig(global_service_name, _handlers, port, version, weight, ip)
     return Server(zk_client, server_config, server_clazz, **kwargs)
 
-def create_client(zk_hosts="", zk_timeout=8, namespace="", 
+def create_client(zk_hosts="", zk_timeout=10, namespace="", 
                 provider_class=AutoProvider, server_address="", 
                 global_service_name="", version=constant.VERSION_DEFAULT, 
                 services=[], load_balance=RoundRobinLoad, 

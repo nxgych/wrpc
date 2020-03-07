@@ -23,18 +23,19 @@ func (r *Register) RegisteAndListen(c *ServerConfig){
 	r.Registe(c)
 	
 	fun := func (event zk.Event) {
-	    if event.State == zk.StateConnected{
-	    	    log.Println("Connection is connected.")
-	    	    go r.Registe(c)
-	    }else if event.State == zk.StateDisconnected{
-	        log.Println("Connection is disconnected.")
-	    }else if event.State == zk.StateExpired{
-	        log.Println("Connection session is expired.")
-	    }else if event.State == zk.StateConnecting{
-	        log.Println("Connection is connecting.")
-	    }else{
-	        log.Println("Connection is unknown.")
-	    }
+		switch event.State{
+			case zk.StateConnected:
+			    log.Println("Connection is connected.")
+			    go r.Registe(c)
+			case zk.StateDisconnected:
+			    log.Println("Connection is disconnected.")
+			case zk.StateExpired:
+				log.Println("Connection session is expired.")
+			case zk.StateConnecting:
+				log.Println("Connection is connecting.")
+			default:
+				log.Println("Connection is unknown.")		    
+		}
 	}
 	
 	option := zk.WithEventCallback(fun)
@@ -44,9 +45,29 @@ func (r *Register) RegisteAndListen(c *ServerConfig){
 func (r *Register) Registe(c *ServerConfig){
 	r.mutex.Lock()  //加锁
 	
-    path := r.zkc.GetAbsolutePath(c.GetPath())
+	var path string
+	if c.GetIp() != ""{
+		path = r.zkc.GetAbsolutePath(c.GetPath())
+	}else{
+		oldPath := r.zkc.GetAbsolutePath(c.GetPath())
+		//reset ip
+		c.SetLocalIp()
+		path = r.zkc.GetAbsolutePath(c.GetPath())
+		if path != oldPath{
+			//delete old path if local ip changed
+			existsOldPath, stat, _ := r.zkc.Conn.Exists(oldPath)
+			if existsOldPath{
+				derr := r.zkc.Conn.Delete(path, stat.Version)
+				if derr != nil{
+					log.Println("ERROR- ", derr)
+				}else{
+					log.Println("delete old path: ", oldPath)
+				}
+			}
+		}
+	}
+	
     log.Println("prelook register path: ", path)
-    
     exists, _, _ := r.zkc.Conn.Exists(path)
     if !exists {
 	    _, err := r.zkc.Conn.Create(path, nil, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
@@ -58,4 +79,10 @@ func (r *Register) Registe(c *ServerConfig){
     }
     
 	r.mutex.Unlock() //解锁
+}
+
+func (r *Register) Close(){
+	if r.zkc != nil{
+		r.zkc.Close()
+	}
 }

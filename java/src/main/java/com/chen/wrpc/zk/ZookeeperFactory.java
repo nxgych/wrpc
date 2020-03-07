@@ -21,8 +21,8 @@ public class ZookeeperFactory implements FactoryBean<CuratorFramework>, Closeabl
     private String zkHosts;  
     
     // session超时时间  
-    private int sessionTimeout = 5000;  
-    private int connectionTimeout = 5000;  
+    private int sessionTimeout = 10000;  
+    private int connectionTimeout = 10000;  
   
     // 共享一个zk链接  
     private boolean singleton = true;  
