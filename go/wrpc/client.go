@@ -143,8 +143,11 @@ func (cw *ClientWrap) Get() interface{}{
 }
 
 func (cw *ClientWrap) Close() error{
-	log.Println("Client closed.") 
-	return cw.transport.Close()
+	if cw.transport.IsOpen(){
+		log.Println("Client closed.") 
+		return cw.transport.Close()
+	}
+	return nil
 }
 
 // client pool
@@ -234,6 +237,8 @@ func (cp *ClientProxy) Call(method string, args... interface{}) (interface{}, er
 		}
 		
 		res, err = nil, errBorrow
+		log.Println("ERROR- ", err)
+		
 		time.Sleep(time.Duration(cp.retryInterval) * time.Millisecond)
 	}
 	return res, err

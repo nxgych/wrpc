@@ -96,7 +96,7 @@ func (p *Pool) putObj(obj interface{}){
 	if p.Size() < p.maxSize {
 		p.pb.Put(obj)
 	}else{
-		closeObj(obj)
+		go closeObj(obj)
 	}
 	p.mutex.Unlock() //解锁
 }
@@ -115,7 +115,7 @@ func (p *Pool) Clear(){
 	p.mutex.Lock()  //加锁
 	
 	for _, e := range p.pb.List{
-		closeObj(e)
+		go closeObj(e)
 	}
     p.pb.List = p.pb.List[0:0]
     p.pb.Count = 0
@@ -151,7 +151,7 @@ func (p *Pool) Return(obj interface{}){
 func (p *Pool) Destroy(obj interface{}){
 	if obj != nil{
 		p.mutex.Lock()  //加锁
-	    closeObj(obj)
+	    go closeObj(obj)
 	    if p.pb.Count > 0{
 	    	    p.pb.Count -= 1
 	    }
@@ -198,7 +198,7 @@ func (p *KeyedPool) putObj(obj interface{}, key string){
 	if p.Size(key) < p.maxSize {
 		p.pb[key].Put(obj)
 	}else{
-		closeObj(obj)
+		go closeObj(obj)
 	}
 	p.mutex.Unlock() //解锁
 }
@@ -222,7 +222,7 @@ func (p *KeyedPool) Clear(){
 	
 	for k := range p.pb{
 		for _, e := range p.pb[k].List{
-			closeObj(e)
+			go closeObj(e)
 		}
         p.pb[k].List = p.pb[k].List[0:0]
 	    p.pb[k].Count = 0
@@ -262,7 +262,7 @@ func (p *KeyedPool) Return(obj interface{}, key string){
 func (p *KeyedPool) Destroy(obj interface{}, key string){
 	if obj != nil{
 		p.mutex.Lock()  //加锁
-	    closeObj(obj)
+	    go closeObj(obj)
 	    if p.pb[key].Count > 0{
 	    	    p.pb[key].Count -= 1
 	    }

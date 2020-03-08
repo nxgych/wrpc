@@ -151,9 +151,8 @@ public class ClientProxy implements FactoryBean<Object>, InitializingBean, Close
 	private void setClientPool(Map<String,TServiceClientFactory<TServiceClient>> cfMap) 
 			throws Exception{
         clientPool = new ClientPool();
-        clientPool.setClientFactory(new ClientFactory(serverProvider, cfMap));
         clientPool.setPoolConfig(maxTotal, maxActive, idleTime);
-        clientPool.setPool();		
+        clientPool.setPool(new ClientFactory(serverProvider, cfMap));		
 	}
 	
 	/**

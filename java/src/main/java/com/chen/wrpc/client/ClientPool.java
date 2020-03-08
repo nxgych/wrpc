@@ -24,8 +24,6 @@ public class ClientPool implements Closeable{
 	private GenericKeyedObjectPool<String, TServiceClient> pool;
 	//pool config
 	private GenericKeyedObjectPoolConfig<TServiceClient> poolConfig;
-	//client pool factory
-	private ClientFactory clientFactory;
 	
 	public ClientPool(){}
 	
@@ -37,7 +35,7 @@ public class ClientPool implements Closeable{
 		this.pool = pool;
 	}
 	
-	public void setPool(){
+	public void setPool(ClientFactory clientFactory){
 		pool = new GenericKeyedObjectPool<String, TServiceClient>(clientFactory, poolConfig);			
 	}
 
@@ -64,14 +62,6 @@ public class ClientPool implements Closeable{
         poolConfig.setTestOnReturn(false);
         poolConfig.setTestWhileIdle(false);		
         this.poolConfig = poolConfig;
-	}
-	
-	public ClientFactory getClientFactory() {
-		return clientFactory;
-	}
-
-	public void setClientFactory(ClientFactory clientFactory) {
-		this.clientFactory = clientFactory;
 	}
 
 	public synchronized void clearPool(){

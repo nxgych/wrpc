@@ -31,25 +31,6 @@ public class ClientFactory extends BaseKeyedPooledObjectFactory<String,TServiceC
     private final ServerProvider serverProvider;  
     //{service name : client class}
     private final  Map<String,TServiceClientFactory<TServiceClient>> clientFactoryMap;  
-
-    static interface PoolOperationCallBack {  
-        // 销毁client之前执行  
-        void destroy(TServiceClient client);  
-        // 创建成功是执行  
-        void make(TServiceClient client);
-    }  
-
-	private PoolOperationCallBack callback = new PoolOperationCallBack() {
-		@Override
-		public void make(TServiceClient client) {
-			logger.info("Client created.");
-		}
-		
-		@Override
-		public void destroy(TServiceClient client) {
-			logger.info("Client destroy.");
-		}
-	};
 	
     protected ClientFactory(ServerProvider serverProvider, 
     		 Map<String,TServiceClientFactory<TServiceClient>> clientFactoryMap) throws Exception {  
@@ -57,29 +38,23 @@ public class ClientFactory extends BaseKeyedPooledObjectFactory<String,TServiceC
         this.clientFactoryMap = clientFactoryMap;  
     }  
 	
-    public void destroyObject(TServiceClient client) throws Exception {  
-		if (callback != null) {
-			try {
-				callback.destroy(client);
-			} catch (Exception e) {
-				throw e; 
-			}
-		}
+    public void destroyObject(final String key, TServiceClient client) throws Exception {  
+    		logger.info("Client closed.");
 		TTransport pin = client.getInputProtocol().getTransport();
 		pin.close();
 		TTransport pout = client.getOutputProtocol().getTransport();
 		pout.close();
     }  
   
-    public boolean validateObject(TServiceClient client) {  
+    public boolean validateObject(final String key, TServiceClient client) {  
 		TTransport pin = client.getInputProtocol().getTransport();
 		TTransport pout = client.getOutputProtocol().getTransport();
 		return pin.isOpen() && pout.isOpen();
     }  
 
-	public PooledObject<TServiceClient> wrap(TServiceClient arg0) {
+	public PooledObject<TServiceClient> wrap(TServiceClient client) {
 		// TODO Auto-generated method stub
-		return new DefaultPooledObject<TServiceClient>(arg0);
+		return new DefaultPooledObject<TServiceClient>(client);
 	}
 
 	@Override
@@ -92,13 +67,8 @@ public class ClientFactory extends BaseKeyedPooledObjectFactory<String,TServiceC
         TMultiplexedProtocol mprotocal = new TMultiplexedProtocol(protocol,key);
         TServiceClient client = this.clientFactoryMap.get(key).getClient(mprotocal);  
         transport.open();  
-        if (callback != null) {  
-            try {  
-                callback.make(client);  
-            } catch (Exception e) {  
-            	throw e;  
-            }  
-        }  
+        
+        logger.info("Client created."); 
         return client;  
 	}
 

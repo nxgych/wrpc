@@ -9,9 +9,9 @@ import com.chen.wrpc.server.ServerConfig;
 public interface ServerRegister {	
 	/**
 	 * 服务注册
-	 * @param path
+	 * @param serverConfig
 	 */
-	void register(String path); 
+	void register(ServerConfig serverConfig); 
 	
 	/**
 	 * 服务注册并监听
