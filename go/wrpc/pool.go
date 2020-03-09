@@ -7,7 +7,6 @@ package wrpc
 **/
 
 import (
-	"time"
 	"sync"
 	"reflect"
 	"errors"
@@ -21,39 +20,8 @@ type CreateFuncType func(...string) (interface{}, error)
 
 // pool block
 type PoolBlock struct {
-    List []interface{}    //模拟队列
+    List *Queue        //队列
     Count int          //引用计数
-}
-
-func (pb *PoolBlock) Size() int{
-	return len(pb.List)
-}
-
-/**
-@timeout millsecond
-*/
-func (pb *PoolBlock) Get(timeout int) (interface{}, error){
-	if pb.Size() <= 0 && timeout > 0{
-		endtime := time.Now().UnixNano() / 1e6 + int64(timeout)
-		for{
-			if pb.Size() <= 0{
-				remaining := endtime - time.Now().UnixNano() / 1e6
-				if remaining <= 0{ break }
-			}else{ break }
-		}
-	}
-	if pb.Size() > 0{
-		obj := pb.List[0]
-		if obj != nil{
-			pb.List = pb.List[1:]
-			return obj, nil
-		}
-	}
-	return nil, errors.New("List is empty.")
-}
-
-func (pb *PoolBlock) Put(obj interface{}){
-	pb.List = append(pb.List, obj)
 }
 
 //base pool struct
@@ -75,11 +43,10 @@ type Pool struct {
 func NewPool(function CreateFuncType, maxSize int, maxActiveSize int, waitTimeout int) *Pool{
 	p := Pool{BasePool:BasePool{function:function, maxSize:maxSize, maxActiveSize:maxActiveSize,
 			                    waitTimeout:waitTimeout}, 
-		      pb:&PoolBlock{Count:0}}
+		      pb:&PoolBlock{List:NewQueue(), Count:0}}
 	if maxSize <= 0 { p.maxSize = MAX_SIZE }
 	if maxActiveSize <= 0 { p.maxActiveSize = MAX_ACTIVE_SIZE }
 	if waitTimeout <= 0 { p.waitTimeout = WAIT_TIMEOUT }
-	p.pb.List = make([]interface{}, 0, p.maxSize)
 	return &p
 }
 
@@ -91,10 +58,10 @@ func (p *Pool) getObj() (interface{}, error){
 	return p.function(p.args...)
 }
 
-func (p *Pool) putObj(obj interface{}){
+func (p *Pool) putObj(obj *Element){
 	p.mutex.Lock()  //加锁
 	if p.Size() < p.maxSize {
-		p.pb.Put(obj)
+		p.pb.List.Put(obj)
 	}else{
 		go closeObj(obj)
 	}
@@ -107,25 +74,30 @@ pool external method
 
 // 获取连接池大小
 func (p *Pool) Size() int{
-	return len(p.pb.List)
+	return p.pb.List.Length()
 }
 
 // 清空连接池
 func (p *Pool) Clear(){
 	p.mutex.Lock()  //加锁
 	
-	for _, e := range p.pb.List{
-		go closeObj(e)
-	}
-    p.pb.List = p.pb.List[0:0]
+    var e *Element
+    for{
+    	    e = p.pb.List.Get()
+    	    if e != nil{
+    	    	    go closeObj(e)
+    	    }else{
+    	    	    break
+    	    }
+    }
     p.pb.Count = 0
     
 	p.mutex.Unlock() //解锁
 }
 
-func (p *Pool) Borrow() (interface{}, error){
-	defer p.mutex.Unlock() //解锁
+func (p *Pool) Borrow() (*Element, error){
 	p.mutex.Lock()  //加锁
+	defer p.mutex.Unlock() //解锁
 	
     if p.Size() <= 0 && p.pb.Count < p.maxSize{
     	    genObj, err := p.getObj()
@@ -133,14 +105,18 @@ func (p *Pool) Borrow() (interface{}, error){
     	    	    return nil, err
     	    }
     	    
-    	    p.pb.Put(genObj)
+    	    p.pb.List.PutValue(genObj)
     	    p.pb.Count += 1
     }
-    obj, ferr := p.pb.Get(p.waitTimeout)
-	return obj, ferr
+    
+    obj := p.pb.List.GetWait(p.waitTimeout)
+	if obj != nil{
+		return obj, nil
+	}
+	return nil, errors.New("Queue is empty.")
 }
 
-func (p *Pool) Return(obj interface{}){
+func (p *Pool) Return(obj *Element){
 	if p.Size() < p.maxActiveSize{
 	    p.putObj(obj)
 	}else{
@@ -148,7 +124,7 @@ func (p *Pool) Return(obj interface{}){
 	}
 }
 
-func (p *Pool) Destroy(obj interface{}){
+func (p *Pool) Destroy(obj *Element){
 	if obj != nil{
 		p.mutex.Lock()  //加锁
 	    go closeObj(obj)
@@ -184,7 +160,7 @@ keyedPool interval method
 func (p *KeyedPool) check(key string){
 	_, ok := p.pb[key]
 	if !ok{
-	    p.pb[key] = &PoolBlock{List:make([]interface{}, 0, p.maxSize), Count:0}
+	    p.pb[key] = &PoolBlock{List:NewQueue(), Count:0}
 	}
 }            
 
@@ -192,11 +168,11 @@ func (p *KeyedPool) getObj() (interface{}, error){
 	return p.function(p.args...)
 }
 
-func (p *KeyedPool) putObj(obj interface{}, key string){
+func (p *KeyedPool) putObj(obj *Element, key string){
 	p.mutex.Lock() 
 	p.check(key)
 	if p.Size(key) < p.maxSize {
-		p.pb[key].Put(obj)
+		p.pb[key].List.Put(obj)
 	}else{
 		go closeObj(obj)
 	}
@@ -211,7 +187,7 @@ keyedPool external method
 func (p *KeyedPool) Size(key string) int{
 	kp, ok := p.pb[key]
 	if ok{
-	    return len(kp.List)
+	    return kp.List.Length()
 	}
 	return 0
 }
@@ -221,19 +197,24 @@ func (p *KeyedPool) Clear(){
 	p.mutex.Lock()  //加锁
 	
 	for k := range p.pb{
-		for _, e := range p.pb[k].List{
-			go closeObj(e)
-		}
-        p.pb[k].List = p.pb[k].List[0:0]
+	    var e *Element
+	    for{
+	    	    e = p.pb[k].List.Get()
+	    	    if e != nil{
+	    	    	    go closeObj(e)
+	    	    }else{
+	    	    	    break
+	    	    }
+	    }
 	    p.pb[k].Count = 0
 	}
     
 	p.mutex.Unlock() //解锁
 }
 
-func (p *KeyedPool) Borrow(key string) (interface{}, error){
-	defer p.mutex.Unlock() //解锁
+func (p *KeyedPool) Borrow(key string) (*Element, error){
 	p.mutex.Lock()  //加锁
+	defer p.mutex.Unlock() //解锁
 	
 	p.check(key)
     if p.Size(key) <= 0 && p.pb[key].Count < p.maxSize{
@@ -244,14 +225,18 @@ func (p *KeyedPool) Borrow(key string) (interface{}, error){
     	    	    return nil, err
     	    }
     	    
-    	    p.pb[key].Put(genObj)
+    	    p.pb[key].List.PutValue(genObj)
     	    p.pb[key].Count += 1
     }
-    obj, ferr := p.pb[key].Get(p.waitTimeout)
-	return obj, ferr
+    
+    obj := p.pb[key].List.GetWait(p.waitTimeout)
+	if obj != nil{
+		return obj, nil
+	}
+	return nil, errors.New("Queue is empty.")
 }
 
-func (p *KeyedPool) Return(obj interface{}, key string){
+func (p *KeyedPool) Return(obj *Element, key string){
 	if p.Size(key) < p.maxActiveSize{
 	    p.putObj(obj, key) 
 	}else{
@@ -259,7 +244,7 @@ func (p *KeyedPool) Return(obj interface{}, key string){
 	}
 }
 
-func (p *KeyedPool) Destroy(obj interface{}, key string){
+func (p *KeyedPool) Destroy(obj *Element, key string){
 	if obj != nil{
 		p.mutex.Lock()  //加锁
 	    go closeObj(obj)
@@ -271,9 +256,9 @@ func (p *KeyedPool) Destroy(obj interface{}, key string){
 }
 
 // 关闭对象
-func closeObj(obj interface{}){
+func closeObj(obj *Element){
 	if obj != nil{
-	    ref := reflect.ValueOf(obj)
+	    ref := reflect.ValueOf(obj.Value)
 	    method := ref.MethodByName("Close")
 	    if (method.IsValid()) {
 	        method.Call([]reflect.Value{})

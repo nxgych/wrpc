@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"reflect"
+	"log"
     "github.com/apache/thrift/lib/go/thrift"
 )
 
@@ -39,6 +40,7 @@ func (ser *Server) Start(){
 		register.RegisteAndListen(ser.conf)
 	}
 	// start
+	log.Println("start server.")
 	if ser.serverObj != nil{
 		ser.serverObj.Serve()
 	}

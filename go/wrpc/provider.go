@@ -124,30 +124,22 @@ func (ap *AutoProvider) SetNodes(){
 
 // watch the child events
 func (ap *AutoProvider) watch(child_ch <-chan zk.Event){
-    for{
-	    select {
-	    	case e := <-child_ch:
-	    	    switch e.Type{
-	    	        case zk.EventNodeChildrenChanged:		    	
-					log.Println("Child node changed.") 
-					ap.SetNodes() 
-		    	    case zk.EventNodeCreated:		    	
-					log.Println("Child node created.") 
-					ap.SetNodes() 
-	    	        case zk.EventNodeDeleted:		    	
-					log.Println("Child node deleted.") 
-					ap.SetNodes()
-				case zk.EventSession:
-					log.Println("EventSession.") 
-					ap.SetNodes()
-				case zk.EventNotWatching:
-					log.Println("EventNotWatching.") 
-					ap.SetNodes()
-				default:
-				    //nothing	
-	    	    }
-	    }
-    }	
+    e := <-child_ch
+	switch e.Type{
+	    case zk.EventNodeChildrenChanged:		    	
+			log.Println("Child node changed.") 
+    	    case zk.EventNodeCreated:		    	
+			log.Println("Child node created.") 
+	    case zk.EventNodeDeleted:		    	
+			log.Println("Child node deleted.") 
+		case zk.EventSession:
+			log.Println("EventSession.") 
+		case zk.EventNotWatching:
+			log.Println("EventNotWatching.") 
+		default:
+		    log.Println("Unknown changed.") 	
+	}
+	ap.SetNodes()
 }
 
 func (ap *AutoProvider) SetClientPool(pool *ClientPool){

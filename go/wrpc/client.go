@@ -205,7 +205,7 @@ func (cp *ClientProxy) Call(method string, args... interface{}) (interface{}, er
 		obj, errBorrow := cp.pool.GetPool().Borrow(key)
 		
 		if obj != nil{
-			var clientWrap *ClientWrap = obj.(*ClientWrap)
+			var clientWrap *ClientWrap = obj.Value.(*ClientWrap)
 			
 		    ref := reflect.ValueOf(clientWrap.Get())
 		    f := ref.MethodByName(method)
