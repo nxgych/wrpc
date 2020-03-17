@@ -19,15 +19,15 @@ class Register(object):
     
     __lock = threading.RLock()
     
-    def __init__(self, zk_client=None):
-        try:
-            self.__zk_client = zk_client 
-        except SessionExpiredError:
-            logger.warn("Zookeeper Client session timed out.")    
+    def __init__(self, server):
+        self.__server = server  
                 
-    def _register(self, server_config):
+    def _register(self):
         with self.__lock:
             try:
+                zk_client = self.__server.zk_client
+                server_config = self.__server.server_config
+                
                 path = ""
                 if server_config.get_ip() is not None:
                     path = server_config.get_path()
@@ -38,31 +38,33 @@ class Register(object):
                     path = server_config.get_path()
                     #delete old path if ip changed
                     if(path != old_path):
-                        if self.__zk_client.exists(old_path):   
-                            self.__zk_client.delete(old_path)
-                            logger.info("delete old path: %s" % old_path)
-    
+                        if zk_client.exists(old_path):   
+                            zk_client.delete(old_path)
+                            logger.info("delete old path: %s" % old_path)  
+  
                 logger.info("prelook register path: %s" % path);
-                if not self.__zk_client.exists(path):
-                    self.__zk_client.create(path, ephemeral=True)   
+                if not zk_client.exists(path):
+                    zk_client.create(path, ephemeral=True)   
                     logger.info("registe server success.");
             except SessionExpiredError:
                 logger.warn("Zookeeper Client session timed out.") 
             except Exception:
                 logger.error("Server register error!")   
                 
-    def register_and_listen(self, server_config):
-        if self.__zk_client is None:
+    def register_and_listen(self):
+        zk_client = self.__server.zk_client
+        if zk_client is None:
             return 
-
-        self.__zk_client.ensure_path(server_config.get_parent_path())        
-        self._register(server_config)
+        
+        server_config = self.__server.server_config
+        zk_client.ensure_path(server_config.get_parent_path())        
+        self._register()
         
         def state_listener(state): 
             if state == KazooState.CONNECTED:
                 logger.info("Connection is connected.")
                 #register check
-                self.__zk_client.handler.spawn(self._register, server_config)
+                zk_client.handler.spawn(self._register)
             elif state == KazooState.LOST:
                 logger.warn("Connection is lost!")
             elif state == KazooState.SUSPENDED:
@@ -70,8 +72,8 @@ class Register(object):
             else:
                 pass
  
-        self.__zk_client.add_listener(state_listener)
+        zk_client.add_listener(state_listener)
     
     def close(self):
-        if self.__zk_client:
-            self.__zk_client.close()    
+        if self.__server:
+            self.__server.stop()    

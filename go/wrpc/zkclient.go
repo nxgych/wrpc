@@ -20,7 +20,7 @@ type ZkClient struct {
 	timeout int //second
 	namespace string
     root string
-	Conn *zk.Conn
+	conn *zk.Conn
 }
 
 /*
@@ -54,7 +54,7 @@ func (z *ZkClient) Connect(){
     }
     e := <-connChan
     if e.State == zk.StateConnected || e.State == zk.StateConnecting{
-	    z.Conn = conn
+	    z.conn = conn
 	    z.root = ZK_SEPARATOR_DEFAULT + ZK_ROOT
 	    if z.namespace != "" {
 	    	    z.root = z.root + ZK_SEPARATOR_DEFAULT + z.namespace
@@ -78,6 +78,10 @@ func callback(event zk.Event) {
 	}
 }
 
+func (z *ZkClient) GetConn() *zk.Conn{
+	return z.conn
+}
+
 func (z *ZkClient) GetAbsolutePath(path string) string{
     return z.root + path
 }
@@ -91,9 +95,9 @@ func (z *ZkClient) EnsurePath(path string, flag int){
 			continue
 		}
 		aimPath = aimPath + ZK_SEPARATOR_DEFAULT + node
-		exists, _, _ := z.Conn.Exists(aimPath)	
+		exists, _, _ := z.conn.Exists(aimPath)	
 		if !exists {
-			_, err := z.Conn.Create(aimPath, nil, int32(flag), zk.WorldACL(zk.PermAll))
+			_, err := z.conn.Create(aimPath, nil, int32(flag), zk.WorldACL(zk.PermAll))
 			if err != nil {
 				log.Println("ERROR- ", err)
 			}
@@ -102,7 +106,7 @@ func (z *ZkClient) EnsurePath(path string, flag int){
 }
 
 func (z *ZkClient) Close(){
-	if z.Conn != nil{
-		z.Conn.Close()
+	if z.conn != nil{
+		z.conn.Close()
 	}
 }

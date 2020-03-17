@@ -1,6 +1,5 @@
 package com.chen.wrpc.register;
 
-import com.chen.wrpc.server.ServerConfig;
 
 /**
  * @author shuai.chen
@@ -9,13 +8,11 @@ import com.chen.wrpc.server.ServerConfig;
 public interface ServerRegister {	
 	/**
 	 * 服务注册
-	 * @param serverConfig
 	 */
-	void register(ServerConfig serverConfig); 
+	void register(); 
 	
 	/**
 	 * 服务注册并监听
-	 * @param serverConfig 
 	 */
-	void registerAndListen(ServerConfig serverConfig);
+	void registerAndListen();
 }

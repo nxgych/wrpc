@@ -7,14 +7,11 @@ Created on 2017年3月4日
 '''
 from __future__ import absolute_import
 
-import logging
 from thrift import TMultiplexedProcessor
 
 from .factory import ThriftProcessPoolServer
 from wrpc.manager.register import Register
 from wrpc.common import constant, util, HandlerException
-
-logger = logging.getLogger(__name__)
 
 class Server(object):
     """server class"""
@@ -29,20 +26,18 @@ class Server(object):
             process_num: process num
             coroutines_num: gevent coroutines num
         """
-        self.__zk_client = zk_client
-        self.__server_config = server_config
+        self.zk_client = zk_client
+        self.server_config = server_config
         
-        if self.__zk_client:
-            self.__register = Register(zk_client)
-        else:    
-            self.__register = None
-            
-        self.__set_server(server_class, **kwargs)
+        self.__server_class = server_class
+        self.__kwargs = kwargs    
+        
+        self.__set_server()
 
-    def __set_server(self, server_class, **kwargs):
+    def __set_server(self):
         mprocessor = self.__get_processor()
-        ip, port = self.__server_config.get_server_ip(), self.__server_config.get_port()
-        self.__server = server_class(mprocessor, ip, port, **kwargs)   
+        ip, port = self.server_config.get_server_ip(), self.server_config.get_port()
+        self.__server_obj = self.__server_class(mprocessor, ip, port, **self.__kwargs)   
     
     def __get_processor(self):
         '''
@@ -51,7 +46,7 @@ class Server(object):
         #muti processor
         mprocessor = TMultiplexedProcessor.TMultiplexedProcessor()
         #register handlers 
-        for handler in self.__server_config.get_service_processors():
+        for handler in self.server_config.get_service_processors():
             #get handler super class
             bases = handler.__bases__
             if len(bases) <= 0:
@@ -71,22 +66,22 @@ class Server(object):
         return mprocessor    
     
     def _register_server(self):
-        if self.__register:
-            self.__register.register_and_listen(self.__server_config)
-     
+        if self.zk_client:
+            register = Register(self)
+            register.register_and_listen()
+            
     def start(self):
         '''start server'''
         self._register_server()
         
-        logger.info("start server.")
-        if self.__server:
-            self.__server.start() 
+        if self.__server_obj:
+            self.__server_obj.start() 
             
     def stop(self):
-        if self.__server:
-            self.__server.stop()
-        if self.__zk_client:
-            self.__zk_client.close()    
+        if self.__server_obj:
+            self.__server_obj.stop()
+        if self.zk_client:
+            self.zk_client.close()    
             
 class ServerConfig(object):
     

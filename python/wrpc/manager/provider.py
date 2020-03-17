@@ -68,7 +68,7 @@ class AutoProvider(Provider):
         
         self.__all_nodes = {}
         self.__live_nodes = set()  
-        self.client_pool = None
+        self.__client_pool = None
         
     def __get_parent_path(self):
         zsd = constant.ZK_SEPARATOR_DEFAULT
@@ -94,8 +94,8 @@ class AutoProvider(Provider):
                 
             self.__load_balance.set_nodes(self.__live_nodes)    
                 
-            if self.client_pool is not None:
-                self.client_pool.clear_pool()    
+            if self.__client_pool is not None:
+                self.__client_pool.clear_pool()    
             
         logger.info("Child node changed.")        
     
@@ -106,11 +106,11 @@ class AutoProvider(Provider):
         return self.__services
     
     def set_client_pool(self, client_pool):
-        self.client_pool = client_pool
+        self.__client_pool = client_pool
         
     def close(self):
-        if self.client_pool:
-            self.client_pool.clear_pool()
+        if self.__client_pool:
+            self.__client_pool.clear_pool()
         if self.__zk_client:
             self.__zk_client.close()
 

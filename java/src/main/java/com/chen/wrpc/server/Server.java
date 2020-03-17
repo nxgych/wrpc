@@ -15,9 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 
-import com.chen.wrpc.common.WrpcException;
+import com.chen.wrpc.server.ServerConfig;
 import com.chen.wrpc.register.ServerRegister;
 import com.chen.wrpc.register.ServerRegisterImpl;
+import com.chen.wrpc.common.WrpcException;
 
 /**
  * @author shuai.chen
@@ -33,13 +34,19 @@ public class Server implements InitializingBean,Closeable{
 	private ServerConfig serverConfig;
     //server thread
 	private ServerThread serverThread;
-	//server register object
-	private ServerRegister serverRegister;
 	
 	public Server(){}
-		
+	
+	public CuratorFramework getZkClient() {
+		return this.zkClient;
+	}
+	
 	public void setZkClient(CuratorFramework zkClient){
 		this.zkClient = zkClient;
+	}
+	
+	public ServerConfig getServerConfig() {
+		return this.serverConfig;
 	}
 	
 	public void setServerConfig(ServerConfig serverConfig){
@@ -86,22 +93,14 @@ public class Server implements InitializingBean,Closeable{
 	    	}		
 	}
 	
-	public void setServerRegister(ServerRegister serverRegister){
-		this.serverRegister = serverRegister;
-	}
-	
-	public void setServerRegister(){
-		if(zkClient != null) {
-			this.serverRegister = new ServerRegisterImpl(zkClient);
-		}
-	}
-	
 	/**
 	 * 服务注册
 	 */
 	public void register(){
-		if(serverConfig != null && serverRegister != null){
-			serverRegister.registerAndListen(serverConfig);  
+		if(zkClient != null){
+			@SuppressWarnings("resource")
+			ServerRegister serverRegister = new ServerRegisterImpl(this);
+			serverRegister.registerAndListen();  
 		}
 	}
 
@@ -109,7 +108,6 @@ public class Server implements InitializingBean,Closeable{
 	public void afterPropertiesSet() throws Exception {
 		// TODO Auto-generated method stub
 	    this.setServerThread();  
-	    this.setServerRegister();
 	}  
 
     public void start() {  

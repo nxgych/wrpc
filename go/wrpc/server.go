@@ -9,7 +9,6 @@ import (
 	"net"
 	"strconv"
 	"reflect"
-	"log"
     "github.com/apache/thrift/lib/go/thrift"
 )
 
@@ -25,22 +24,56 @@ create server
 @conf: 服务配置
 */
 func NewServer(zkc *ZkClient, conf *ServerConfig) *Server{	
-	mprocessor := GetProcessor(conf.GetServiceProcessors())
-	serverObj := ServerFactory(mprocessor, conf.GetServerIp(), conf.GetPort())
-	return &Server{zkc:zkc, conf:conf, serverObj:serverObj}
+	ser := &Server{zkc:zkc, conf:conf}
+	ser.setServerObj()
+	return ser
+}
+
+func (ser *Server) GetConf() *ServerConfig{
+	return ser.conf
+}
+
+func (ser *Server) GetZkClient() *ZkClient{
+	return ser.zkc
+}
+
+// set server object
+func (ser *Server) setServerObj(){
+	mprocessor := ser.getProcessor()
+	ser.serverObj = ServerFactory(mprocessor, ser.conf.GetServerIp(), ser.conf.GetPort())
+}
+
+/*
+ build muti processor
+ */
+func (ser *Server) getProcessor() *thrift.TMultiplexedProcessor{
+	multiProcessor := thrift.NewTMultiplexedProcessor()
+	for _, processor := range ser.conf.GetServiceProcessors(){
+		//反射
+		ref := reflect.ValueOf(processor).Elem()
+		if ref.Kind() == reflect.Ptr{
+		    ref = ref.Elem()
+		}	
+	    serviceName := ref.Type().Field(1).Type.Name()
+		multiProcessor.RegisterProcessor(serviceName, processor)
+	}
+	return multiProcessor
+}
+
+// register
+func (ser *Server) registerServer(){
+	if ser.zkc != nil {
+		register := NewRegister(ser)
+		register.RegisteAndListen()
+	}
 }
 
 /*
 start server
 */
 func (ser *Server) Start(){
-	// register
-	if ser.zkc != nil {
-		register := NewRegister(ser.zkc)
-		register.RegisteAndListen(ser.conf)
-	}
+    ser.registerServer() 
 	// start
-	log.Println("start server.")
 	if ser.serverObj != nil{
 		ser.serverObj.Serve()
 	}
@@ -58,24 +91,7 @@ func (ser *Server) Stop(){
 	}
 }
 
-/**
- build muti processor
- */
-func GetProcessor(processors []thrift.TProcessor) *thrift.TMultiplexedProcessor{
-	multiProcessor := thrift.NewTMultiplexedProcessor()
-	for _, processor := range processors{
-		//反射
-		ref := reflect.ValueOf(processor).Elem()
-		if ref.Kind() == reflect.Ptr{
-		    ref = ref.Elem()
-		}	
-	    serviceName := ref.Type().Field(1).Type.Name()
-		multiProcessor.RegisterProcessor(serviceName, processor)
-	}
-	return multiProcessor
-}
-
-/**
+/*
  server factory
  */
 func ServerFactory(processor *thrift.TMultiplexedProcessor, ip string, port int) *thrift.TSimpleServer{

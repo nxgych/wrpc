@@ -10,8 +10,9 @@ import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chen.wrpc.common.WrpcException;
+import com.chen.wrpc.server.Server;
 import com.chen.wrpc.server.ServerConfig;
+import com.chen.wrpc.common.WrpcException;
 
 /**
  * @author shuai.chen
@@ -21,20 +22,23 @@ public class ServerRegisterImpl implements ServerRegister,Closeable{
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 	
-	private CuratorFramework zkClient; 
+	private Server server; 
 
     public ServerRegisterImpl(){}  
     
-    public ServerRegisterImpl(CuratorFramework zkClient){  
-        this.zkClient = zkClient;  
+    public ServerRegisterImpl(Server server){  
+        this.server = server;  
     }  
 	  
 	@Override
-	public void register(ServerConfig serverConfig) {
+	public void register() {
 		// TODO Auto-generated method stub
 		while(true){  
             try {  
             		synchronized(this){
+            			CuratorFramework zkClient = server.getZkClient();
+            			ServerConfig serverConfig = server.getServerConfig();
+            			
 	                if(zkClient.getZookeeperClient().blockUntilConnectedOrTimedOut()){  
 		            		String path = "";
 		            		if(serverConfig.getIp() != null){
@@ -78,7 +82,8 @@ public class ServerRegisterImpl implements ServerRegister,Closeable{
 	}
 	
 	@Override
-	public void registerAndListen(ServerConfig serverConfig){
+	public void registerAndListen(){
+		CuratorFramework zkClient = server.getZkClient();		
 		if(zkClient != null){
 			zkClient.getConnectionStateListenable()
 			.addListener(new ConnectionStateListener() {
@@ -106,7 +111,7 @@ public class ServerRegisterImpl implements ServerRegister,Closeable{
 					    		// do nothing	
 				    	}
 				    	//recreated any situation
-				    	register(serverConfig);
+				    	register();
 			    } 
 
 			});
@@ -114,8 +119,8 @@ public class ServerRegisterImpl implements ServerRegister,Closeable{
 	}
 
 	public void close(){  
-		if(zkClient != null){
-			zkClient.close();  
+		if(server != null){
+			server.close();  
 		}
 	}
 	  
