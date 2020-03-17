@@ -97,7 +97,7 @@ func (ap *AutoProvider) GetServices() []Service {
 func (ap *AutoProvider) SetNodes(){    
     path := ap.zkc.GetAbsolutePath(ap.GetParentPath())
     
-    nodes, _, child_ch, err := ap.zke.GetConn().ChildrenW(path)
+    nodes, _, child_ch, err := ap.zkc.GetConn().ChildrenW(path)
     if err != nil {
     	    log.Println("get zk path: ", path)
         log.Println("ERROR- ", err)
