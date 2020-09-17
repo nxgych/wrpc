@@ -2,7 +2,7 @@
 
 ## Description</br>
     wrpc是一个基于thrift、zookeeper的跨语言、高可用、轻量级rpc框架。
-    欢迎同行交流及指正，qq：815738968 ~
+    欢迎同行交流及指正，wechat/qq：506001974
 
 ## Feature</br>
     1、基于thrift，跨语言，目前支持java、python、go；
